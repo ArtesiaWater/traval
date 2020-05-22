@@ -106,7 +106,7 @@ class Detector:
             if hasattr(self, attr):
                 delattr(self, attr)
 
-    def apply_ruleset(self, ruleset, compare=False):
+    def apply_ruleset(self, ruleset, compare=True):
         """Apply RuleSet to series
 
         Parameters
@@ -115,7 +115,7 @@ class Detector:
             RuleSet object containing detection rules
         compare : bool, optional
             if True, compare all results to original series and store in
-            comparisons dictionary, default is False
+            dictionary under comparisons attribute, default is True
 
         See also
         --------
@@ -144,7 +144,6 @@ class Detector:
 
         # store final result for convenience
         self.ts_result = d[len(d) - 1]
-        # self.ts_result.name = self.ruleset.name
 
     def set_truth(self, truth):
         """set 'truth' series. 

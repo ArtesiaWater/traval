@@ -2,7 +2,6 @@
 
 Tools for applying automatic error detection algorithms to timeseries.
 
-
 ## Introduction
 
 This module is set up to provide tools for applying any error detection algorithm to any timeseries. The module consists of three main components:
@@ -10,7 +9,13 @@ This module is set up to provide tools for applying any error detection algorith
 - `Detector`: a data management object for storing timeseries and error detection results.
 - `SeriesComparison*`: objects for comparing timeseries. These objects include plots for visualizing the comparisons.
 
+The general workflow consists of the following steps:
+1. Define error detection algorithm(s).
+2. Load data, i.e. raw timeseries data and optionally timeseries representing the "truth" to see how well the algorithms perform.
+3. Initialize Detector objects and apply algorithms to timeseries.
+4. Store and analyze the results.
 
+For more detailed information and examples, please refer to the notebooks in the examples directory.
 
 ## Installation
 To install the traval module, follow these steps:
