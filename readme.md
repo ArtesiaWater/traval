@@ -45,8 +45,10 @@ Add a detection rule (using a general rule from the library contained within the
 
 Take a look at the ruleset by just typing `ruleset`:
 
-```
+```python
 >>> ruleset
+```
+```
 RuleSet: 'my_first_algorithm'
   step: name            apply_to
      1: rule1                  0
