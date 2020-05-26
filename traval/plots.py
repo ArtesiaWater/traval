@@ -125,7 +125,7 @@ class ComparisonPlots:
         return ax
 
 
-def roc_plot(tpr, fpr, labels):
+def roc_plot(tpr, fpr, labels, ax=None, plot_diagonal=True, **kwargs):
     """Receiver operator characteristic plot.
 
     Plots the false positive rate (x-axis) versus the 
@@ -146,6 +146,13 @@ def roc_plot(tpr, fpr, labels):
         entry and plots it. Otherwise just plots the array or value.
     labels : list or str
         label for each tpr/fpr entry.
+    ax : matplotlib.pyplot.Axes, optional
+        axes to plot on, default is None, which creates new figure
+    plot_diagonal : bool, optional
+        whether to plot the diagonal (useful for combining multiple 
+        ROC plots)
+    **kwargs
+        passed to ax.plot
 
     Returns
     -------
@@ -160,12 +167,18 @@ def roc_plot(tpr, fpr, labels):
     if not isinstance(labels, list):
         labels = [labels]
 
-    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+    else:
+        fig = ax.figure
+
     ax.set_aspect("equal")
-    ax.plot([0, 1], [0, 1], ls="dashed", lw=1.0, c="k", label="random guess")
+    if plot_diagonal:
+        ax.plot([0, 1], [0, 1], ls="dashed", lw=1.0, c="k",
+                label="random guess")
 
     for itpr, ifpr, ilbl in zip(tpr, fpr, labels):
-        ax.plot(ifpr, itpr, "o", label=ilbl, ls="none")
+        ax.plot(ifpr, itpr, marker="o", label=ilbl, ls="none", **kwargs)
 
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
@@ -174,6 +187,8 @@ def roc_plot(tpr, fpr, labels):
     ax.set_ylabel("True Positive Rate (sensitivity)")
     ax.set_xlabel("False Positive Rate (1-specificity)")
     ax.set_title("reiceiver operator characteristic plot")
+
+    fig.tight_layout()
 
     return ax
 
@@ -250,7 +265,6 @@ if __name__ == "__main__":
     cpp = ComparisonPlots(scr)
     cpp.plot_relative_comparison(
         mark_unique=True, mark_different=True, mark_identical=True)
-
 
     base_idx = pd.date_range("2020-01-01", periods=110, freq="D")
     idx1 = pd.date_range("2020-01-01", periods=110, freq="D")
