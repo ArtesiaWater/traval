@@ -92,11 +92,11 @@ def test_relative_comparison_stats():
 
     scr = traval.SeriesComparisonRelative(s1, s2, b)
 
-    assert scr.false_positive_rate + scr.specificity == 1
-    assert scr.false_negative_rate + scr.sensitivity == 1
+    assert scr.bc.false_positive_rate + scr.bc.specificity == 1
+    assert scr.bc.false_negative_rate + scr.bc.sensitivity == 1
     return scr
 
 
 def test_confusion_matrix():
     cp = test_relative_comparison_stats()
-    return cp.confusion_matrix()
+    return cp.bc.confusion_matrix()
