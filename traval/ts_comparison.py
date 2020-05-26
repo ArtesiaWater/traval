@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 
+from .binary_classifier import BinaryClassifier
 from .plots import ComparisonPlots
 
 
@@ -217,6 +218,43 @@ class SeriesComparison:
 
         return summary
 
+    def compare_by_comment(self):
+        """Compare series per comment.
+
+        Returns
+        -------
+        comparison : pd.Series
+            series containing the possible comparison outcomes, but split
+            into categories, one for each unique comment. Comments must
+            be passed via series2.
+
+        Raises
+        ------
+        ValueError
+            if no comment series is found 
+
+        """
+
+        if self.c2n.empty:
+            raise ValueError("No comment series!")
+
+        categories = ["in_both_identical",
+                      "in_both_different",
+                      "in_s1",
+                      "in_s2",
+                      "in_both_nan"]
+
+        unique_comments = self.c2n.unique()
+        summary = pd.DataFrame(index=categories,
+                               columns=unique_comments,
+                               dtype=int)
+        for cat in categories:
+            cat_idx = getattr(self, "idx_" + cat)
+            vc = self.c2n.loc[cat_idx].value_counts()
+            summary.loc[cat, vc.index] = vc
+
+        return summary.sort_index(axis=1)
+
     def _check_idx_comparison(self, return_missing=False):
         """internal method for verifying comparison, used for debugging
         during development.
@@ -335,6 +373,9 @@ class SeriesComparisonRelative(SeriesComparison):
         delattr(self, "summary")
         self.summary_base_comparison = self._summarize_comparison_to_base()
 
+        # do binary classification
+        self.bc = BinaryClassifier.from_series_comparison_relative(self)
+
     def _compare_series_to_base(self):
         """internal method for comparing two timseries to base timeseries
         """
@@ -398,163 +439,45 @@ class SeriesComparisonRelative(SeriesComparison):
 
         return summary
 
-    def confusion_matrix(self, as_array=False):
-        """Calculate confusion matrix.
-
-        Confusion matrix shows the performance of the algorithm given a 
-        certain truth. An abstract example of the confusion matrix:
-
-                        |     Algorithm     |
-                        |-------------------|
-                        |  error  | correct |
-        ------|---------|---------|---------|
-              |  error  |   TP    |   FN    |
-        Truth |---------|---------|---------|
-              | correct |   FP    |   TN    |
-        ------|---------|---------|---------|
-
-        where:
-        - TP: True Positives  = errors correctly detected by algorithm
-        - TN: True Negatives  = correct values correctly not flagged by algorithm
-        - FP: False Positives = correct values marked as errors by algorithm
-        - FN: False Negatives = errors not detected by algorithm
-
-        Parameters
-        ----------
-        as_array : bool, optional
-            return data as array instead of DataFrame, by default False
+    def compare_to_base_by_comment(self):
+        """Compare two series to base series per comment.
 
         Returns
         -------
-        data : pd.DataFrame or np.array
-            confusion matrix
+        comparison : pd.Series
+            Series containing the number of observations in each possible
+            comparison category, but split per unique comment. Comments must 
+            be provided via 'truth' series (series2). 
+
+        Raises
+        ------
+        ValueError
+            if no comment series is available.
 
         """
 
-        # create array with data
-        data = np.zeros((2, 2), dtype=int)
-        # true positives = errors correctly identified
-        data[0, 0] = self.n_true_positives
-        # true negatives = correct observations correctly left alone
-        data[1, 1] = self.n_true_negatives
-        # false negatives = seen as correct by algorithm but
-        # are errors according to 'truth'
-        data[0, 1] = self.n_false_negatives
-        # false positives = identified as errors by algorithm but
-        # are correct according to 'truth'
-        data[1, 0] = self.n_false_positives
+        if self.c2n.empty:
+            raise ValueError("No comment series!")
 
-        if as_array:
-            return data
-        else:
-            # create columns and index
-            columns = pd.MultiIndex.from_product([["Algorithm"],
-                                                  ["error", "correct"]])
-            index = pd.MultiIndex.from_product([['"Truth"'],
-                                                ["error", "correct"]])
-            cmat = pd.DataFrame(
-                index=index, columns=columns, data=data, dtype=int)
-            return cmat
+        categories = ['kept_in_both',
+                      'flagged_in_s1',
+                      'flagged_in_s2',
+                      'flagged_in_both',
+                      'in_all_nan',
+                      'introduced_in_s1',
+                      'introduced_in_s2',
+                      'introduced_in_both']
 
-    @property
-    def sensitivity(self):
-        """Sensitivity or True Positive Rate.
+        unique_comments = self.c2n.unique()
+        summary = pd.DataFrame(index=categories,
+                               columns=unique_comments,
+                               dtype=int)
+        for cat in categories:
+            cat_idx = getattr(self, "idx_r_" + cat)
+            vc = self.c2n.loc[cat_idx].value_counts()
+            summary.loc[cat, vc.index] = vc
 
-        Statistic describing ratio of true positives identified,
-        which also says something about the avoidance of false negatives.
-
-            Sensitivity = TP / (TP + FN)
-
-        where
-        - TP : True Positives
-        - FN : False Negatives
-
-        """
-        tp = self.n_true_positives
-        fn = self.n_false_negatives
-        return tp / (tp + fn)
-
-    @property
-    def specificity(self):
-        """Specificity or True Negative Rate
-
-        Statistic describing ratio of true negatives identified,
-        which also says something about the avoidance of false positives.
-
-            Specificity = TN / (TN + FP)
-
-        where
-        - TN : True Negatives
-        - FP : False Positives
-
-        """
-        tn = self.n_true_negatives
-        fp = self.n_false_positives
-        return tn / (tn + fp)
-
-    @property
-    def true_positive_rate(self):
-        """True Positive Rate. Synonym for sensitivity.
-
-        See sensitiviy for description.
-
-        """
-        return self.sensitivity
-
-    @property
-    def true_negative_rate(self):
-        """True Negative Rate. Synonym for specificity.
-
-        See specificity for description.
-
-        """
-        return self.specificity
-
-    @property
-    def false_positive_rate(self):
-        """False Positive Rate = (1 - specificity).
-
-            FPR = FP / (FP + TN)
-
-        where
-        - FP : False Positives
-        - TN : True Negatives
-
-        """
-        fp = self.n_false_positives
-        tn = self.n_true_negatives
-        return fp / (fp + tn)
-
-    @property
-    def false_negative_rate(self):
-        """False Negative Rate = (1 - sensitivity).
-
-            FNR = FN / (FN + TP)
-
-        where
-        - FN : False Negatives
-        - TP : True Positives
-
-        """
-        fn = self.n_false_negatives
-        tp = self.n_true_positives
-        return fn / (fn + tp)
-
-    @property
-    def n_false_positives(self):
-        return self.idx_r_flagged_in_s1.size
-
-    @property
-    def n_true_positives(self):
-        return self.idx_r_flagged_in_both.size
-
-    @property
-    def n_false_negatives(self):
-        return self.idx_r_flagged_in_s2.size
-
-    @property
-    def n_true_negatives(self):
-        return self.idx_r_kept_in_both.size
+        return summary.sort_index(axis=1)
 
 
 if __name__ == "__main__":
