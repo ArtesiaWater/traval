@@ -186,7 +186,7 @@ def roc_plot(tpr, fpr, labels, ax=None, plot_diagonal=True, **kwargs):
     ax.legend(loc="lower right")
     ax.set_ylabel("True Positive Rate (sensitivity)")
     ax.set_xlabel("False Positive Rate (1-specificity)")
-    ax.set_title("reiceiver operator characteristic plot")
+    ax.set_title("receiver operator characteristic plot")
 
     fig.tight_layout()
 
