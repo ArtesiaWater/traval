@@ -117,8 +117,8 @@ class SeriesComparison:
             self.s2n.name = "series2"
 
         # Without NaNs
-        self.s1 = self.s1n.dropna()
-        self.s2 = self.s2n.dropna()
+        self.s1 = self.s1n.loc[~self.s1n.isna()]
+        self.s2 = self.s2n.loc[~self.s2n.isna()]
         self._compare_indices_without_nans()
 
         # Compare values (subset of idx_in_both)
@@ -363,7 +363,7 @@ class SeriesComparisonRelative(SeriesComparison):
         # With NaNs
         self.basen = base
         # Without NaNs
-        self.base = self.basen.dropna()
+        self.base = self.basen.loc[~self.basen.isna()]
 
         # do comparison
         self._compare_series_to_base()
