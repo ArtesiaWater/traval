@@ -101,7 +101,7 @@ class Detector:
     def reset(self):
         """Reset Detector object
         """
-        for attr in ["ruleset", "ts_result", "results",
+        for attr in ["ruleset", "results",
                      "corrections", "comparisons"]:
             if hasattr(self, attr):
                 delattr(self, attr)
@@ -113,9 +113,13 @@ class Detector:
         ----------
         ruleset : RuleSet
             RuleSet object containing detection rules
-        compare : bool, optional
+        compare : bool or list of int, optional
             if True, compare all results to original series and store in
-            dictionary under comparisons attribute, default is True
+            dictionary under comparisons attribute, default is True. If False,
+            do not store comparisons. If list of int, store only those step 
+            numbers as comparisons. Note: value of -1 refers to last step 
+            for convenience.
+
 
         See also
         --------
@@ -129,21 +133,29 @@ class Detector:
         self.corrections = c
         self.results = d
 
+        # if compare is not False do comparison
         if compare:
             self.comparisons = {}
             base = d[0]
             base.name = "base series"
-            for k, s in d.items():
+            # if compare is not list, get all step numbers
+            if not isinstance(compare, list):
+                compare = d.keys()
+
+            # do comparison
+            for k in compare:
+                # if k is negative, convert to step number from end
+                if k < 0:
+                    k = len(d.keys()) + k
+                # only do comparison for steps, not base series
                 if k > 0:
+                    s = d[k]
                     s.name = self.ruleset.get_step_name(k)
                     if self.truth is None:
-                        self.comparisons[k] = SeriesComparison(s, self.truth)
+                        self.comparisons[k] = SeriesComparison(s, base)
                     else:
                         self.comparisons[k] = SeriesComparisonRelative(
                             s, self.truth, base)
-
-        # store final result for convenience
-        self.ts_result = d[len(d) - 1]
 
     def set_truth(self, truth):
         """set 'truth' series. 
@@ -197,7 +209,6 @@ class Detector:
 
     def plot_overview(self, mark_suspects=True):
         resultsdf = self.get_results_dataframe()
-        correctionsdf = self.get_corrections_dataframe()
 
         _, axes = plt.subplots(len(self.corrections) + 1, 1,
                                figsize=(12, 5), dpi=100, sharex=True,
@@ -208,11 +219,12 @@ class Detector:
 
             if mark_suspects:
                 if icol != resultsdf.columns[0]:
-                    mask = (correctionsdf[icol] != 0.0) | (
-                        correctionsdf[icol].isna())
-                    iax.plot(resultsdf.loc[mask].index,
-                             resultsdf.loc[mask].iloc[:, 0], marker="x",
-                             c="C3", ls="none", label="flagged")
+                    corr = self.corrections[resultsdf.columns.get_loc(icol)]
+                    if isinstance(corr, pd.Series):
+                        iax.plot(corr.index,
+                                 resultsdf.loc[corr.index].iloc[:, 0],
+                                 marker="x", c="C3", ls="none",
+                                 label="flagged")
 
             iax.legend(loc="best", ncol=2)
             iax.grid(b=True)
