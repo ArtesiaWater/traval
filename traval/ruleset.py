@@ -228,7 +228,7 @@ class RuleSet:
 
         """
         name = series.name
-        d, c = OrderedDict(), OrderedDict()  # store results, corrections
+        d, c = {}, {}  # store results, corrections
         d[0] = series
         for i, irule in enumerate(self.rules.values(), start=1):
             # if apply_to is int, apply to that series
@@ -238,7 +238,7 @@ class RuleSet:
                 corr = irule["func"](d[int(irule["apply_to"])], **arg_dict)
                 # store both correction and result
                 d[i] = d[int(irule["apply_to"])] + corr
-                c[i] = corr
+                c[i] = corr.loc[corr != 0.0].copy()
             # if apply_to is tuple, collect series as kwargs to func
             elif isinstance(irule["apply_to"], tuple):
                 # collect results
@@ -250,10 +250,7 @@ class RuleSet:
                 # apply func with collected results
                 # store both correction and result
                 d[i] = irule["func"](*collect_args, **arg_dict)
-                c[i] = pd.Series(index=d[i].index,
-                                 data=np.zeros(d[i].index.size),
-                                 dtype=float,
-                                 fastpath=True)
+                c[i] = np.zeros(1)
             else:
                 raise TypeError("Value of 'apply_to' must be int or tuple "
                                 f"of ints. Got '{irule['apply_to']}'")
