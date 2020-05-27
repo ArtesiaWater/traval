@@ -209,7 +209,10 @@ class BinaryClassifier:
         """
         tp = self.n_true_positives
         fn = self.n_false_negatives
-        return tp / (tp + fn)
+        if tp + fn > 0:
+            return tp / (tp + fn)
+        else:
+            return np.nan
 
     @property
     def specificity(self):
@@ -227,7 +230,10 @@ class BinaryClassifier:
         """
         tn = self.n_true_negatives
         fp = self.n_false_positives
-        return tn / (tn + fp)
+        if tn + fp > 0:
+            return tn / (tn + fp)
+        else:
+            return np.nan
 
     @property
     def true_positive_rate(self):
@@ -260,7 +266,10 @@ class BinaryClassifier:
         """
         fp = self.n_false_positives
         tn = self.n_true_negatives
-        return fp / (fp + tn)
+        if fp + tn > 0:
+            return fp / (fp + tn)
+        else:
+            return np.nan
 
     @property
     def false_negative_rate(self):
@@ -275,4 +284,7 @@ class BinaryClassifier:
         """
         fn = self.n_false_negatives
         tp = self.n_true_positives
-        return fn / (fn + tp)
+        if fn + tp > 0:
+            return fn / (fn + tp)
+        else:
+            return np.nan
