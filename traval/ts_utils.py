@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def mask_corrections_as_nan(series, mask):
-    """internal method, get corrections series with NaNs where mask == True
+    """Get corrections series with NaNs where mask == True
 
     Parameters
     ----------
@@ -27,6 +27,24 @@ def mask_corrections_as_nan(series, mask):
 
 
 def resample_short_series_to_long_series(short_series, long_series):
+    """Resample a short timeseries with a few observations to index from a 
+    longer timeseries.
+
+    First uses 'ffill' then 'bfill' to fill new series.
+
+    Parameters
+    ----------
+    short_series : pd.Series
+        short timeseries
+    long_series : pd.Series
+        long timeseries
+
+    Returns
+    -------
+    new_series : pd.Series
+        series with index from long_series and data from short_series
+
+    """
     new_series = pd.Series(index=long_series.index, dtype=float)
 
     for i, idatetime in enumerate(short_series.index):
@@ -43,6 +61,23 @@ def resample_short_series_to_long_series(short_series, long_series):
 
 
 def diff_with_gap_awareness(series, max_gap="7D"):
+    """Get diff of timeseries with a limit on gap between two values.
+
+    Parameters
+    ----------
+    series : pd.Series
+        timeseries to calculate diff for
+    max_gap : str, optional
+        maximum period between two observations for calculating diff, otherwise
+        set value to NaN, by default "7D"
+
+    Returns
+    -------
+    diff : pd.Series
+        timeseries with diff, with NaNs whenever two values are farther apart
+        than max_gap.
+
+    """
     diff = series.diff()
     # identify gaps and set diff value after gap to nan
     dt = series.index[1:] - series.index[:-1]
@@ -53,6 +88,33 @@ def diff_with_gap_awareness(series, max_gap="7D"):
 
 
 def spike_finder(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
+    """Find spikes in timeseries.
+
+    Spikes are sudden jumps in the value of a timeseries that last 1 timestep.
+    They can be both negative or positive.
+
+    Parameters
+    ----------
+    series : pd.Series
+        timeseries to find spikes in
+    threshold : float, optional
+        the minimum size of the jump to qualify as a spike, by default 0.15
+    spike_tol : float, optional
+        offset between value of timeseries before spike and after spike, 
+        by default 0.15. After a spike, the value of the timeseries is usually
+        close to but not identical to the value that preceded the spike. Use
+        this parameter to control how close the value has to be.
+    max_gap : str, optional
+        only considers observations within this maximum gap 
+        between measurements to calculate diff, by default "7D". 
+
+    Returns
+    -------
+    upspikes, downspikes : pandas.DateTimeIndex
+        pandas DateTimeIndex objects containing timestamps of upward and
+        downward spikes.
+
+    """
 
     # identify gaps and set diff value after gap to nan
     diff = diff_with_gap_awareness(series, max_gap=max_gap)
@@ -128,3 +190,45 @@ def interpolate_series_to_new_index(series, new_index):
     si = pd.Series(index=new_index, data=s_interp,
                    dtype=float, fastpath=True)
     return si
+
+
+def create_synthetic_raw_timeseries(raw_series, truth_series, comments):
+    """Create synthetic raw timeseries. Updates 'truth_series'
+    (where values are labelled with a comment) with values from raw_series.
+
+    Used for removing unlabeled changes between a raw and validated
+    timeseries. 
+
+    Parameters
+    ----------
+    raw_series : pd.Series
+        timeseries with raw data
+    truth_series : pd.Series
+        timeseries with validated data
+    comments : pd.Series
+        timeseries with comments. Index must be same as 'truth_series'.
+        When value does not have a comment it must be an empty string: ''. 
+
+    Returns
+    -------
+    s : pd.Series
+        synthetic raw timeseries, same as truth_series but updated with
+        raw_series where value has been commented.
+
+    """
+
+    if truth_series.index.symmetric_difference(comments.index).size > 0:
+        raise ValueError("'truth_series' and 'comments' must have same index!")
+
+    # get intersection of index (both need to have data)
+    idx_in_both = raw_series.dropna().index.intersection(truth_series.index)
+
+    # get obs with comments
+    mask_comments = comments.loc[idx_in_both] != ""
+
+    # create synthetic raw series
+    synth_raw = truth_series.loc[idx_in_both].copy()
+    synth_raw.loc[mask_comments] = \
+        raw_series.loc[idx_in_both].loc[mask_comments]
+
+    return synth_raw
