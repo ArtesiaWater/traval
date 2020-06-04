@@ -40,7 +40,7 @@ Add a detection rule (using a general rule from the library contained within the
 
 ```python
 >>> ruleset.add_rule("rule1", traval.rulelib.rule_ufunc_threshold , apply_to=0, 
-                     kwargs={"ufunc": np.greater, "threshold": 10.0})
+                     kwargs={"ufunc": (np.greater,), "threshold": 10.0})
 ```
 
 Take a look at the ruleset by just typing `ruleset`:
