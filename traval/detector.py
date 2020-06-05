@@ -1,3 +1,5 @@
+
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -203,7 +205,16 @@ class Detector:
         return df
 
     def get_corrections_dataframe(self):
-        df = pd.concat([s for s in self.corrections.values()], axis=1)
+        clist = []
+        for s in self.corrections.values():
+            if isinstance(s, np.ndarray):
+                s = pd.Series()
+            clist.append(s.fillna(1.0))
+        # corrections are nan, 0.0 means nothing is changed
+        df = (pd.concat(clist, axis=1)
+              .isna()
+              .replace(False, np.nan)
+              .replace(True, 0.0))
         df.columns = list(self.ruleset.rules.keys())
         return df
 
