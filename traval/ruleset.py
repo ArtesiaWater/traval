@@ -1,6 +1,72 @@
+import json
+from copy import deepcopy
+import warnings
 from collections import OrderedDict
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
+from . import rulelib
+
+
+class RuleSetEncoder(json.JSONEncoder):
+    def default(self, o):
+        if callable(o):
+            return "func:" + o.__name__
+        elif isinstance(o, pd.Series):
+            return "series:" + o.to_json(date_format="iso", orient="split")
+        elif isinstance(o, pd.DataFrame):
+            # Necessary to maintain order when using the JSON format!
+            return "dataframe:" + o.to_json(orient="index")
+        elif pd.isna(o):
+            return None
+        else:
+            return super(RuleSetEncoder, self).default(o)
+
+
+def ruleset_hook(obj):
+
+    for key, value in obj.items():
+        if str(value).startswith("func:"):
+            # from rlib
+            funcname = value.split(":")[1]
+            try:
+                val = getattr(rulelib, funcname)
+            except:
+                warnings.warn(f"Could not load function {funcname} "
+                              "from `traval.rulelib`!")
+                val = funcname
+            obj[key] = val
+        elif key in ['ufunc']:
+            # numpy functions
+            funcname = value[0].split(":")[1]
+            try:
+                val = getattr(np, funcname)
+            except:
+                warnings.warn(f"Could not load function {funcname} "
+                              "from `numpy`!")
+                val = (funcname,)
+            obj[key] = (val,)
+        elif str(value).startswith("series:"):
+            try:
+                value = value[7:]  # strip 'series:'
+                obj[key] = pd.read_json(value, typ='series', orient="split")
+            except:
+                obj[key] = value
+            if isinstance(obj[key], pd.Series):
+                obj[key].index = obj[key].index.tz_localize(None)
+        elif str(value).startswith("dataframe:"):
+            # Necessary to maintain order when using the JSON format!
+            value = value[9:]  # strip 'dataframe:'
+            value = json.loads(value, object_pairs_hook=OrderedDict)
+            df = pd.DataFrame(data=value, columns=value.keys()).T
+            obj[key] = df.apply(pd.to_numeric, errors="ignore")
+        else:
+            try:
+                obj[key] = json.loads(value, object_hook=ruleset_hook)
+            except:
+                obj[key] = value
+    return obj
 
 
 class RuleSet:
@@ -255,6 +321,132 @@ class RuleSet:
                 raise TypeError("Value of 'apply_to' must be int or tuple "
                                 f"of ints. Got '{irule['apply_to']}'")
         return d, c
+
+    def to_pickle(self, fname, verbose=True):
+        """Write RuleSet to disk as pickle
+
+        Parameters
+        ----------
+        fname : str
+            filename or path of file
+        verbose : bool, optional
+            prints message when operation complete, default is True
+
+        See also
+        --------
+        from_pickle : load RuleSet from pickle file
+        to_json : store RuleSet as json file (does not support custom functions)
+        from_json : load RuleSet from json file
+
+        """
+        import pickle
+        rules = deepcopy(self.rules)
+        rules["name"] = self.name
+        with open(fname, "wb") as f:
+            pickle.dump(rules, f)
+        if verbose:
+            print(f"RuleSet written to file: '{fname}'")
+
+    @classmethod
+    def from_pickle(cls, fname):
+        """Load RuleSet object form pickle file
+
+        Parameters
+        ----------
+        fname : str
+            filename or path to file
+
+        Returns
+        -------
+        RuleSet
+            RuleSet object, including custom functions and parameters
+
+        See also
+        --------
+        to_pickle : store RuleSet as pickle (supports custom functions)
+        to_json : store RuleSet as json file (does not support custom functions)
+        from_json : load RuleSet from json file
+
+        """
+        import pickle
+        with open(fname, "rb") as f:
+            rules = pickle.load(f)
+        rs = cls(name=rules.pop("name"))
+        rs.rules.update(rules)
+        return rs
+
+    def to_json(self, fname, verbose=True):
+        """Write RuleSet to disk as json file
+
+        Note that it is not possible to write custom functions to a JSON
+        file. When writing the JSON only the name of the function is stored. 
+        When loading a JSON file, the function name is used to search within
+        `traval.rulelib`. If the function can be found, it loads that 
+        function. A RuleSet making use of functions in the default rulelib. 
+
+        Parameters
+        ----------
+        fname : str
+            filename or path to file
+        verbose : bool, optional
+            prints message when operation complete, default is True
+
+
+        See also
+        --------
+        from_json : load RuleSet from json file
+        to_pickle : store RuleSet as pickle (supports custom functions)
+        from_pickle : load RuleSet from pickle file
+
+        """
+        msg = ("Custom functions will not be preserved when storing "
+               "RuleSet as JSON file!")
+        warnings.warn(msg)
+        rules = deepcopy(self.rules)
+        rules["name"] = self.name
+        if not fname.endswith(".json"):
+            raise ValueError("Filename requires '.json' as extension!")
+        with open(fname, "w") as f:
+            json.dump(rules, f, indent=4, cls=RuleSetEncoder)
+        if verbose:
+            print(f"RuleSet written to file: '{fname}'")
+
+    @classmethod
+    def from_json(cls, fname):
+        """Load RuleSet object from JSON file
+
+        Attempts to load functions in the RuleSet by searching for the 
+        function name in traval.rulelib. If the function cannot be found, only
+        the name of the function is preserved. This means a RuleSet 
+        with custom functions will not be fully functional when loaded 
+        from a JSON file.
+
+        Parameters
+        ----------
+        fname : str
+            filename or path to file
+
+        Returns
+        -------
+        RuleSet:
+            RuleSet object
+
+        See also
+        --------
+        to_json : store RuleSet as JSON file (does not support custom functions)
+        to_pickle : store RuleSet as pickle (supports custom functions)
+        from_pickle : load RuleSet from pickle file
+
+        """
+        with open(fname, "r") as f:
+            data = json.load(f, object_hook=ruleset_hook)
+
+        name = data.pop("name")
+        rset = cls(name=name)
+        for k, v in data.items():
+            rset.add_rule(k, v['func'], apply_to=v['apply_to'],
+                          kwargs=v["kwargs"])
+        return rset
 
 
 if __name__ == "__main__":

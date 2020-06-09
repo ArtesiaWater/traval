@@ -1,3 +1,4 @@
+from traval.ruleset import RuleSet
 import traval
 import pandas as pd
 import numpy as np
@@ -90,4 +91,20 @@ def test_del_rules():
     rset = test_add_rules()
     rset.del_rule("gt10")
     assert len(rset.rules) == 1
+    return
+
+def test_to_from_pickle():
+    rset = test_add_rules()
+    rset.to_pickle("test.pkl")
+    rset = RuleSet.from_pickle("test.pkl")
+    import os
+    os.remove("test.pkl")
+    return
+
+def test_to_from_json():
+    rset = test_add_rules()
+    rset.to_json("test.json")
+    rset = RuleSet.from_json("test.json")
+    import os
+    os.remove("test.json")
     return
