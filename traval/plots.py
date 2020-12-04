@@ -68,7 +68,7 @@ class ComparisonPlots:
 
         # Add legend and other plot stuff
         plot_labels = [i.get_label() for i in plot_handles]
-        ax.legend(plot_handles, plot_labels, loc="upper left",
+        ax.legend(plot_handles, plot_labels, loc="best",
                   ncol=int(np.ceil(len(plot_handles) / 2.)))
         ax.grid(b=True)
         fig.tight_layout()
