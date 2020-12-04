@@ -9,9 +9,13 @@ class ComparisonPlots:
         self.cp = cp
 
     def plot_series_comparison(self, mark_unique=True, mark_different=True,
-                               mark_identical=True):
+                               mark_identical=True, ax=None):
 
-        fig, ax = plt.subplots(1, 1, figsize=(12, 5))
+        if ax is None:
+            fig, ax = plt.subplots(1, 1, figsize=(12, 5))
+        else:
+            fig = ax.figure
+
         plot_handles = []
 
         # Plot both series
@@ -64,18 +68,20 @@ class ComparisonPlots:
 
         # Add legend and other plot stuff
         plot_labels = [i.get_label() for i in plot_handles]
-        ax.legend(plot_handles, plot_labels, loc="best",
-                  ncol=int(np.ceil(len(plot_handles) / 3.)))
+        ax.legend(plot_handles, plot_labels, loc="upper left",
+                  ncol=int(np.ceil(len(plot_handles) / 2.)))
         ax.grid(b=True)
         fig.tight_layout()
         return ax
 
     def plot_relative_comparison(self, mark_unique=True, mark_different=True,
-                                 mark_identical=True, mark_introduced=False):
+                                 mark_identical=True, mark_introduced=False,
+                                 ax=None):
 
         ax = self.plot_series_comparison(mark_unique=mark_unique,
                                          mark_different=mark_different,
-                                         mark_identical=mark_identical)
+                                         mark_identical=mark_identical,
+                                         ax=ax)
 
         plot_handles, plot_labels = ax.get_legend_handles_labels()
         # remove duplicates
