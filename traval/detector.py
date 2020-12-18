@@ -63,6 +63,8 @@ class Detector:
 
         if truth is not None:
             self.set_truth(truth)
+        else:
+            self.truth = None
 
     def __repr__(self):
         return f"Detector: <{self.name}>"
@@ -200,9 +202,15 @@ class Detector:
 
     def get_results_dataframe(self):
         df = pd.concat([s for s in self.results.values()],
-                       names=["base series"] + list(self.ruleset.rules.keys()),
                        axis=1)
+        df.columns = ["base series"] + list(self.ruleset.rules.keys())
         return df
+
+    def get_final_result(self):
+        key = len(self.results.keys()) - 1
+        s = self.results[key]
+        s.name = self.name
+        return s
 
     def get_corrections_dataframe(self):
         clist = []
@@ -237,7 +245,7 @@ class Detector:
                                  marker="x", c="C3", ls="none",
                                  label="flagged")
 
-            iax.legend(loc="best", ncol=2)
+            iax.legend(loc="upper left", ncol=2)
             iax.grid(b=True)
 
         return axes
