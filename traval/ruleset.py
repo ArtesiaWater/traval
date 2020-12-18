@@ -284,7 +284,7 @@ class RuleSet:
         -------
         d: OrderedDict
             Dictionary containing resulting timeseries after applying rules.
-            Keys represent step numbers(0 is the original series, 1 the
+            Keys represent step numbers (0 is the original series, 1 the
             outcome of rule  # 1, etc.)
         c: OrderedDict
             Dictionary containing corrections to timeseries based on rules
