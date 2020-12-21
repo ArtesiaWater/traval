@@ -185,10 +185,10 @@ def interpolate_series_to_new_index(series, new_index):
 
 
 def create_synthetic_raw_timeseries(raw_series, truth_series, comments):
-    """Create synthetic raw timeseries. 
+    """Create synthetic raw timeseries.
 
-    Updates 'truth_series' (where values are labelled with a comment) 
-    with values from raw_series. Used for removing unlabeled changes between 
+    Updates 'truth_series' (where values are labelled with a comment)
+    with values from raw_series. Used for removing unlabeled changes between
     a raw and validated timeseries.
 
     Parameters
