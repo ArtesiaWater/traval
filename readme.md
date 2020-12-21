@@ -67,9 +67,9 @@ Take a look at the ruleset by just typing `ruleset`:
 ```
 
 ```
-        RuleSet: 'my_first_algorithm'
-          step: name            apply_to
-             1: rule1                  0
+RuleSet: 'my_first_algorithm'
+  step: name            apply_to
+      1: rule1                  0
 ```
 
 Next define a Detector object. This object is designed to store a timeseries 
