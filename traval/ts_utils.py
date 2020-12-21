@@ -26,8 +26,7 @@ def mask_corrections_as_nan(series, mask):
 
 
 def resample_short_series_to_long_series(short_series, long_series):
-    """Resample a short timeseries with a few observations to index from a
-    longer timeseries.
+    """Resample a short timeseries to index from a longer timeseries.
 
     First uses 'ffill' then 'bfill' to fill new series.
 
@@ -139,14 +138,12 @@ def spike_finder(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
 
 
 def bandwidth_moving_avg_n_sigma(series, window, n):
-    """Calculate bandwidth around timeseries based moving average and.
-
-    n * standard deviation.
+    """Calculate bandwidth around timeseries based moving average + n * std.
 
     Parameters
     ----------
     series : pd.Series
-        [description]
+        series to calculate bandwidth for
     window : int
         number of observations to consider for moving average
     n : float
@@ -188,11 +185,11 @@ def interpolate_series_to_new_index(series, new_index):
 
 
 def create_synthetic_raw_timeseries(raw_series, truth_series, comments):
-    """Create synthetic raw timeseries. Updates 'truth_series' (where values
-    are labelled with a comment) with values from raw_series.
+    """Create synthetic raw timeseries. 
 
-    Used for removing unlabeled changes between a raw and validated
-    timeseries.
+    Updates 'truth_series' (where values are labelled with a comment) 
+    with values from raw_series. Used for removing unlabeled changes between 
+    a raw and validated timeseries.
 
     Parameters
     ----------

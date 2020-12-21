@@ -1,4 +1,3 @@
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -69,7 +68,7 @@ class Detector:
 
     @staticmethod
     def _validate_input_series(series):
-        """internal method for checking type and dtype of series.
+        """Internal method for checking type and dtype of series.
 
         Parameters
         ----------
@@ -157,7 +156,7 @@ class Detector:
                             s, self.truth, base)
 
     def set_truth(self, truth):
-        """set 'truth' series.
+        """Set 'truth' series.
 
         Used for comparison with detection result.
 
@@ -171,7 +170,7 @@ class Detector:
         self.truth = truth
 
     def confusion_matrix(self, series=None, truth=None):
-        """calculate confusion matrix.
+        """Calculate confusion matrix.
 
         Parameters
         ----------
@@ -194,18 +193,41 @@ class Detector:
         pass
 
     def get_results_dataframe(self):
+        """Get results as DataFrame.
+
+        Returns
+        -------
+        df : pandas.DataFrame
+            results with flagged values set to NaN per applied rule.
+        """
         df = pd.concat([s for s in self.results.values()],
                        axis=1)
         df.columns = ["base series"] + list(self.ruleset.rules.keys())
         return df
 
     def get_final_result(self):
+        """Get final timeseries with flagged values set to NaN.
+
+        Returns
+        -------
+        series : pandas.Series
+            Timeseries produced by final step in RuleSet with flagged
+            values set to NaN.
+        """
         key = len(self.results.keys()) - 1
         s = self.results[key]
         s.name = self.name
         return s
 
     def get_corrections_dataframe(self):
+        """Get DataFrame containing corrections.
+
+        Returns
+        -------
+        df : pandas.DataFrame
+            DataFrame containing corrections. NaN means value is flagged
+            as suspicious, 0.0 means no correction.
+        """
         clist = []
         for s in self.corrections.values():
             if isinstance(s, np.ndarray):
@@ -220,6 +242,18 @@ class Detector:
         return df
 
     def plot_overview(self, mark_suspects=True):
+        """Plot timeseries with flagged values per applied rule.
+
+        Parameters
+        ----------
+        mark_suspects : bool, optional
+            mark suspect values with red X, by default True
+
+        Returns
+        -------
+        ax : list of matplotlib.pyplot.Axes
+            axes objects
+        """
         resultsdf = self.get_results_dataframe()
 
         _, axes = plt.subplots(len(self.corrections) + 1, 1,

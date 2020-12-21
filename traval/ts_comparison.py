@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 from .binary_classifier import BinaryClassifier
 from .plots import ComparisonPlots
@@ -56,11 +55,12 @@ class SeriesComparison:
     """Object for comparing two timeseries.
 
     Comparison yields the following categories:
-    - in_both_identical: in both series and difference <= than diff_threshold
-    - in_both_different: in both series and difference > than diff_threshold
-    - in_s1: only in series #1
-    - in_s2: only in series #2
-    - in_both_nan: NaN in both
+
+    -  in_both_identical: in both series and difference <= than diff_threshold
+    -  in_both_different: in both series and difference > than diff_threshold
+    -  in_s1: only in series #1
+    -  in_s2: only in series #2
+    -  in_both_nan: NaN in both
 
 
     Parameters
@@ -126,7 +126,7 @@ class SeriesComparison:
 
     @staticmethod
     def _parse_series(series):
-        """internal method to parse timeseries input.
+        """Internal method to parse timeseries input.
 
         Parameters
         ----------
@@ -153,7 +153,7 @@ class SeriesComparison:
             raise TypeError("Provide pandas.Series or pandas.DataFrame!")
 
     def _compare_indices_with_nans(self):
-        """internal method for identifying indices with NaNs in both series."""
+        """Internal method for identifying indices with NaNs in both series."""
         nanmask1 = self.s1n.isna()
         nanmask2 = self.s2n.isna()
 
@@ -163,7 +163,7 @@ class SeriesComparison:
         self.idx_in_both_nan = idxcomp_nan.idx_in_both()
 
     def _compare_indices_without_nans(self):
-        """internal method for identifying overlapping and unique indices."""
+        """Internal method for identifying overlapping and unique indices."""
         idxcomp = DateTimeIndexComparison(self.s1.index, self.s2.index)
 
         self.idx_in_both = idxcomp.idx_in_both()
@@ -171,7 +171,7 @@ class SeriesComparison:
         self.idx_in_s2 = idxcomp.idx_in_idx2()
 
     def _compare_series_values(self):
-        """internal method for identifying different identical values.
+        """Internal method for identifying different identical values.
 
         Returns
         -------
@@ -185,7 +185,7 @@ class SeriesComparison:
         return different_idx, identical_idx
 
     def _summarize_series_comparison(self):
-        """internal method for summarizing comparison.
+        """Internal method for summarizing comparison.
 
         Returns
         -------
@@ -242,12 +242,11 @@ class SeriesComparison:
         return summary.sort_index(axis=1)
 
     def _check_idx_comparison(self, return_missing=False):
-        """internal method for verifying comparison, used for debugging during
-        development.
+        """Internal method for verifying comparison.
 
-        Ensures the counts match total length of union series indices. Returns
-        False if there are any missing members, otherwise returns True.
-
+        Used for debugging during development. Ensures the counts match total
+        length of union series indices. Returns False if there are any missing
+        members, otherwise returns True.
 
         Parameters
         ----------
@@ -291,15 +290,16 @@ class SeriesComparisonRelative(SeriesComparison):
 
     Comparison yields both the results from SeriesComparison as well as the
     following categories for the relative comparison to the base timeseries:
-    - kept_in_both: both timeseries and the base timeseries contain values
-    - flagged_in_s1: value is NaN/missing in series #1
-    - flagged_in_s2: value is NaN/missing in series #2
-    - flagged_in_both: value is NaN/missing in both series #1 and series #2
-    - in_all_nan: value is NaN in all timeseries (series #1, #2 and base)
-    - introduced_in_s1: value is NaN/missing in base but has value in series #1
-    - introduced_in_s2: value is NaN/missing in base but has value in series #2
-    - introduced_in_both: value is NaN/missing in base but has value in both
-      timeseries
+
+    -  kept_in_both: both timeseries and the base timeseries contain values
+    -  flagged_in_s1: value is NaN/missing in series #1
+    -  flagged_in_s2: value is NaN/missing in series #2
+    -  flagged_in_both: value is NaN/missing in both series #1 and series #2
+    -  in_all_nan: value is NaN in all timeseries (series #1, #2 and base)
+    -  introduced_in_s1: value is NaN/missing in base but has value in series #1
+    -  introduced_in_s2: value is NaN/missing in base but has value in series #2
+    -  introduced_in_both: value is NaN/missing in base but has value in both
+       timeseries
 
     Parameters
     ----------
@@ -360,7 +360,7 @@ class SeriesComparisonRelative(SeriesComparison):
         self.bc = BinaryClassifier.from_series_comparison_relative(self)
 
     def _compare_series_to_base(self):
-        """internal method for comparing two timseries to base timeseries."""
+        """Internal method for comparing two timseries to base timeseries."""
 
         # where Nans in base timeseries
         nanmask = self.basen.isna()
@@ -397,7 +397,7 @@ class SeriesComparisonRelative(SeriesComparison):
                                              self.basen.index)))
 
     def _summarize_comparison_to_base(self):
-        """internal method for summarizing comparison with base timeseries.
+        """Internal method for summarizing comparison with base timeseries.
 
         Returns
         -------

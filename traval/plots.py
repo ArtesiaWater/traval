@@ -4,12 +4,39 @@ import pandas as pd
 
 
 class ComparisonPlots:
+    """Mix-in class for plots for comparing timeseries."""
 
     def __init__(self, cp):
+        """Initialize comparison plots mix-in class.
+
+        Parameters
+        ----------
+        cp : SeriesComparison
+            traval comparison object
+        """
         self.cp = cp
 
     def plot_series_comparison(self, mark_unique=True, mark_different=True,
                                mark_identical=True, ax=None):
+        """Plot comparison between two timeseries.
+
+        Parameters
+        ----------
+        mark_unique : bool, optional
+            mark unique values with colored X's, by default True
+        mark_different : bool, optional
+            highlight where timeseries differ with red, by default True
+        mark_identical : bool, optional
+            highlight where timeseries are identical with green,
+            by default True
+        ax : axis, optional
+            axis object to plot on, by default None
+
+        Returns
+        -------
+        ax : axis
+            axis object
+        """
 
         if ax is None:
             fig, ax = plt.subplots(1, 1, figsize=(12, 5))
@@ -77,6 +104,27 @@ class ComparisonPlots:
     def plot_relative_comparison(self, mark_unique=True, mark_different=True,
                                  mark_identical=True, mark_introduced=False,
                                  ax=None):
+        """Plot comparison between two timeseries relative to base timeseries.
+
+        Parameters
+        ----------
+        mark_unique : bool, optional
+            mark unique observations with colored X's, by default True
+        mark_different : bool, optional
+            highlight where series are different in red, by default True
+        mark_identical : bool, optional
+            highlight where series are identical with green, by default True
+        mark_introduced : bool, optional
+            mark observations that are not in the base timeseries with X's,
+            by default False
+        ax : axis, optional
+            axis to plot on, by default None
+
+        Returns
+        -------
+        ax : axis
+            axis handle
+        """
 
         ax = self.plot_series_comparison(mark_unique=mark_unique,
                                          mark_different=mark_different,
@@ -136,11 +184,11 @@ def roc_plot(tpr, fpr, labels, ax=None, plot_diagonal=True, **kwargs):
 
     Plots the false positive rate (x-axis) versus the
     true positive rate (y-axis). The 'tpr' and 'fpr' can be passed as:
-    - values: outcome of a single error detection algorithm
-    - arrays: outcomes of error detection algorithm in which a detection
-      parameter is varied.
-    - lists: for passing multiple results, entries can be values or
-      arrays, as listed above.
+    -  values: outcome of a single error detection algorithm
+    -  arrays: outcomes of error detection algorithm in which a detection
+       parameter is varied.
+    -  lists: for passing multiple results, entries can be values or
+       arrays, as listed above.
 
     Parameters
     ----------

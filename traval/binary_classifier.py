@@ -27,8 +27,7 @@ class BinaryClassifier:
 
     @classmethod
     def from_series_comparison_relative(cls, comparison):
-        """Construct Binary Classification object from SeriesComparisonRelative
-        object.
+        """Binary Classification object from SeriesComparisonRelative object.
 
         Parameters
         ----------

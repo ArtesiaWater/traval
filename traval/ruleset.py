@@ -115,6 +115,7 @@ class RuleSet:
         self.name = name if name is not None else ""
 
     def __repr__(self):
+        """String representation of object."""
         description = f"RuleSet: '{self.name}'"
         header = "  {step:>4}: {name:<15} {apply_to:<8}".format(
             step="step", name="name", apply_to="apply_to")
@@ -150,7 +151,7 @@ class RuleSet:
         return self._applyself(series)
 
     def add_rule(self, name, func, apply_to=None, kwargs=None):
-        """add rule to RuleSet.
+        """Add rule to RuleSet.
 
         Parameters
         ----------
@@ -174,7 +175,7 @@ class RuleSet:
                             "apply_to": apply_to, "kwargs": kwargs}
 
     def del_rule(self, name):
-        """delete rule from RuleSet.
+        """Delete rule from RuleSet.
 
         Parameters
         ----------
@@ -221,7 +222,7 @@ class RuleSet:
         return n
 
     def to_dataframe(self):
-        """convert RuleSet to pandas.DataFrame.
+        """Convert RuleSet to pandas.DataFrame.
 
         Returns
         -------
@@ -237,7 +238,7 @@ class RuleSet:
         pass
 
     def _parse_kwargs(self, kwargs, name=None):
-        """internal method, parse keyword arguments dictionary.
+        """Internal method, parse keyword arguments dictionary.
 
         Iterates over keys, values in kwargs dictionary. If value is callable,
         calls value with 'name' as function argument. The result is stored
@@ -265,7 +266,7 @@ class RuleSet:
         return new_args
 
     def _applyself(self, series):
-        """internal method, apply ruleset to series.
+        """Internal method, apply ruleset to series.
 
         Parameters
         ----------
