@@ -1,5 +1,6 @@
 ![traval](https://github.com/ArtesiaWater/traval/workflows/traval/badge.svg)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/b1fd0320965b42f58ecc2c3d1b6b7df0)](https://www.codacy.com?utm_source=github.com&utm_medium=referral&utm_content=ArtesiaWater/traval&utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Coverage/b1fd0320965b42f58ecc2c3d1b6b7df0)](https://www.codacy.com?utm_source=github.com&utm_medium=referral&utm_content=ArtesiaWater/traval&utm_campaign=Badge_Coverage)
 
 # traval
 
