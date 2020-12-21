@@ -11,8 +11,10 @@ def test_series_comparison_plot():
 
     b = pd.Series(index=base_idx, data=1.0)
     b.iloc[:10] = np.nan
+
     s1 = pd.Series(index=idx1, data=1.0)
     s1.loc["2020-03-15":"2020-04-15"] = np.nan
+
     s2 = pd.Series(index=idx2, data=2.0)
     s2.loc["2020-04-01":"2020-04-30"] = np.nan
     s2.loc["2020-07"] = 1.0
@@ -31,11 +33,14 @@ def test_relative_series_comparison_plot():
 
     b = pd.Series(index=base_idx, data=1.0)
     b.iloc[:10] = np.nan
+
     s1 = pd.Series(index=idx1, data=1.0)
     s1.loc["2020-03-15":"2020-04-15"] = np.nan
+
     s2 = pd.Series(index=idx2, data=2.0)
     s2.loc["2020-04-01":"2020-04-30"] = np.nan
     s2.loc["2020-07"] = 1.0
+
     scr = SeriesComparisonRelative(s1, s2, b)
 
     ax = scr.plots.plot_relative_comparison(

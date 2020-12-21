@@ -434,32 +434,3 @@ class RuleSet:
             rset.add_rule(k, v['func'], apply_to=v['apply_to'],
                           kwargs=v["kwargs"])
         return rset
-
-
-if __name__ == "__main__":
-
-    name1 = "gt10"
-
-    def func1(s):
-        mask = s > 10
-        s = pd.Series(index=s.index, data=0.0)
-        s.loc[mask] = np.nan
-        return s
-
-    name2 = "lt0_very_long_name"
-
-    def func2(s):
-        mask = s < 0
-        s = pd.Series(index=s.index, data=0.0)
-        s.loc[mask] = np.nan
-        return s
-
-    rset = RuleSet("my_rulez")
-    rset.add_rule(name1, func1, apply_to=0, kwargs=None)
-    rset.add_rule(name2, func2, apply_to=1, kwargs=None)
-
-    rdf = rset.to_dataframe()
-
-    series = pd.Series(index=range(10), data=range(-5, 23, 3))
-
-    d, c = rset(series)
