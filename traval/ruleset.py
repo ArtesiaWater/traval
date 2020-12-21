@@ -101,7 +101,6 @@ class RuleSet:
     >>> rset.add_rule("foo", foo, apply_to=0)  # add rule 1
     >>> rset.add_rule("bar", bar, apply_to=1, kwargs={"n": 2})  # add rule 2
     >>> print(rset)  # print overview of rules
-
     """
 
     def __init__(self, name=None):
@@ -111,7 +110,6 @@ class RuleSet:
         ----------
         name : str, optional
             name of the RuleSet, by default None
-
         """
         self.rules = OrderedDict()
         self.name = name if name is not None else ""
@@ -129,7 +127,7 @@ class RuleSet:
         return "\n".join([description, header] + rows)
 
     def __call__(self, series):
-        """Apply ruleset to series
+        """Apply ruleset to series.
 
         Parameters
         ----------
@@ -147,13 +145,12 @@ class RuleSet:
             Keys represent step numbers (1 contains the corrections based on
             rule #1, etc.). When no correction is available, step contains
             the value 0.
-
         """
 
         return self._applyself(series)
 
     def add_rule(self, name, func, apply_to=None, kwargs=None):
-        """add rule to RuleSet
+        """add rule to RuleSet.
 
         Parameters
         ----------
@@ -161,36 +158,34 @@ class RuleSet:
             name of the rule
         func : callable
             function that takes series as input and returns
-            a correction series. 
+            a correction series.
         apply_to : int or tuple of ints, optional
-            series to apply the rule to, by default None, which defaults to the 
-            original series. E.g. 0 is the original series, 1 is the result of 
-            step 1, etc. If a tuple of ints is passed, the results of those 
-            steps are collected and passed to func. 
+            series to apply the rule to, by default None, which defaults to the
+            original series. E.g. 0 is the original series, 1 is the result of
+            step 1, etc. If a tuple of ints is passed, the results of those
+            steps are collected and passed to func.
         kwargs : dict, optional
-            dictionary of additional keyword arguments for func, by default 
+            dictionary of additional keyword arguments for func, by default
             None. Additional arguments can be functions as well, in which case
             they must return some value based on the name of the series to
-            which the RuleSet will be applied. 
-
+            which the RuleSet will be applied.
         """
         self.rules[name] = {"name": name, "func": func,
                             "apply_to": apply_to, "kwargs": kwargs}
 
     def del_rule(self, name):
-        """delete rule from RuleSet
+        """delete rule from RuleSet.
 
         Parameters
         ----------
         name : str
             name of the rule to delete
-
         """
         self.rules.pop(name)
         # logger.debug(f"Removed {name} from ruleset!")
 
     def update_rule(self, name, func, apply_to=None, kwargs=None):
-        """Update rule in RuleSet
+        """Update rule in RuleSet.
 
         Parameters
         ----------
@@ -198,18 +193,17 @@ class RuleSet:
             name of the rule
         func : callable
             function that takes series as input and returns
-            a correction series. 
+            a correction series.
         apply_to : int or tuple of ints, optional
-            series to apply the rule to, by default None, which defaults to the 
-            original series. E.g. 0 is the original series, 1 is the result of 
-            step 1, etc. If a tuple of ints is passed, the results of those 
-            steps are collected and passed to func. 
+            series to apply the rule to, by default None, which defaults to the
+            original series. E.g. 0 is the original series, 1 is the result of
+            step 1, etc. If a tuple of ints is passed, the results of those
+            steps are collected and passed to func.
         kwargs : dict, optional
-            dictionary of additional keyword arguments for func, by default 
+            dictionary of additional keyword arguments for func, by default
             None. Additional arguments can be functions as well, in which case
             they must return some value based on the name of the series to
-            which the RuleSet will be applied. 
-
+            which the RuleSet will be applied.
         """
         if name not in self.rules.keys():
             raise KeyError("No rule by that name in RuleSet!")
@@ -227,13 +221,12 @@ class RuleSet:
         return n
 
     def to_dataframe(self):
-        """convert RuleSet to pandas.DataFrame
+        """convert RuleSet to pandas.DataFrame.
 
         Returns
         -------
         rdf : pandas.DataFrame
             DataFrame containing all the information from the RuleSet
-
         """
         rules = [irule for irule in self.rules.values()]
         rdf = pd.DataFrame(rules, index=range(1, len(rules) + 1))
@@ -244,7 +237,7 @@ class RuleSet:
         pass
 
     def _parse_kwargs(self, kwargs, name=None):
-        """internal method, parse keyword arguments dictionary
+        """internal method, parse keyword arguments dictionary.
 
         Iterates over keys, values in kwargs dictionary. If value is callable,
         calls value with 'name' as function argument. The result is stored
@@ -261,7 +254,6 @@ class RuleSet:
         -------
         dict
             dictionary of parsed arguments
-
         """
         new_args = dict()
         if kwargs is not None:
@@ -273,7 +265,7 @@ class RuleSet:
         return new_args
 
     def _applyself(self, series):
-        """internal method, apply ruleset to series
+        """internal method, apply ruleset to series.
 
         Parameters
         ----------
@@ -291,7 +283,6 @@ class RuleSet:
             Keys represent step numbers(1 contains the corrections based on
             rule  # 1, etc.). When no correction is available, step contains
             the value 0.
-
         """
         name = series.name
         d, c = {}, {}  # store results, corrections
@@ -323,7 +314,7 @@ class RuleSet:
         return d, c
 
     def to_pickle(self, fname, verbose=True):
-        """Write RuleSet to disk as pickle
+        """Write RuleSet to disk as pickle.
 
         Parameters
         ----------
@@ -337,7 +328,6 @@ class RuleSet:
         from_pickle : load RuleSet from pickle file
         to_json : store RuleSet as json file (does not support custom functions)
         from_json : load RuleSet from json file
-
         """
         import pickle
         rules = deepcopy(self.rules)
@@ -349,7 +339,7 @@ class RuleSet:
 
     @classmethod
     def from_pickle(cls, fname):
-        """Load RuleSet object form pickle file
+        """Load RuleSet object form pickle file.
 
         Parameters
         ----------
@@ -366,7 +356,6 @@ class RuleSet:
         to_pickle : store RuleSet as pickle (supports custom functions)
         to_json : store RuleSet as json file (does not support custom functions)
         from_json : load RuleSet from json file
-
         """
         import pickle
         with open(fname, "rb") as f:
@@ -376,13 +365,13 @@ class RuleSet:
         return rs
 
     def to_json(self, fname, verbose=True):
-        """Write RuleSet to disk as json file
+        """Write RuleSet to disk as json file.
 
         Note that it is not possible to write custom functions to a JSON
-        file. When writing the JSON only the name of the function is stored. 
+        file. When writing the JSON only the name of the function is stored.
         When loading a JSON file, the function name is used to search within
-        `traval.rulelib`. If the function can be found, it loads that 
-        function. A RuleSet making use of functions in the default rulelib. 
+        `traval.rulelib`. If the function can be found, it loads that
+        function. A RuleSet making use of functions in the default rulelib.
 
         Parameters
         ----------
@@ -397,7 +386,6 @@ class RuleSet:
         from_json : load RuleSet from json file
         to_pickle : store RuleSet as pickle (supports custom functions)
         from_pickle : load RuleSet from pickle file
-
         """
         msg = ("Custom functions will not be preserved when storing "
                "RuleSet as JSON file!")
@@ -413,12 +401,12 @@ class RuleSet:
 
     @classmethod
     def from_json(cls, fname):
-        """Load RuleSet object from JSON file
+        """Load RuleSet object from JSON file.
 
-        Attempts to load functions in the RuleSet by searching for the 
+        Attempts to load functions in the RuleSet by searching for the
         function name in traval.rulelib. If the function cannot be found, only
-        the name of the function is preserved. This means a RuleSet 
-        with custom functions will not be fully functional when loaded 
+        the name of the function is preserved. This means a RuleSet
+        with custom functions will not be fully functional when loaded
         from a JSON file.
 
         Parameters
@@ -436,7 +424,6 @@ class RuleSet:
         to_json : store RuleSet as JSON file (does not support custom functions)
         to_pickle : store RuleSet as pickle (supports custom functions)
         from_pickle : load RuleSet from pickle file
-
         """
         with open(fname, "r") as f:
             data = json.load(f, object_hook=ruleset_hook)

@@ -3,12 +3,10 @@ import pandas as pd
 
 
 class BinaryClassifier:
-    """Class for calculating binary classification statistics.
-
-    """
+    """Class for calculating binary classification statistics."""
 
     def __init__(self, tp, fp, tn, fn):
-        """Initialize class for calculating binary classification statistics
+        """Initialize class for calculating binary classification statistics.
 
         Parameters
         ----------
@@ -20,7 +18,6 @@ class BinaryClassifier:
             number of True Negatives (TN)
         fn : int
             number of False Negatives (FN)
-
         """
         self.n_obs = tp + fp + tn + fn
         self.n_true_positives = self.tp = tp
@@ -30,8 +27,8 @@ class BinaryClassifier:
 
     @classmethod
     def from_series_comparison_relative(cls, comparison):
-        """Construct Binary Classification object from
-        SeriesComparisonRelative object.
+        """Construct Binary Classification object from SeriesComparisonRelative
+        object.
 
         Parameters
         ----------
@@ -42,7 +39,6 @@ class BinaryClassifier:
         -------
         BinaryClassifier
             object for calculating binary classification statistics
-
         """
         n_true_positives = comparison.idx_r_flagged_in_both.size
         n_false_positives = comparison.idx_r_flagged_in_s1.size
@@ -75,7 +71,6 @@ class BinaryClassifier:
         See also
         --------
         BinaryClassifier.confusion_matrix : for explanation (of abbreviations)
-
         """
         if isinstance(cmat, pd.DataFrame):
             [tp, fn], [fp, tn] = cmat.values
@@ -126,7 +121,6 @@ class BinaryClassifier:
         -------
         data : pd.DataFrame or np.array
             confusion matrix
-
         """
 
         # create array with data
@@ -171,7 +165,6 @@ class BinaryClassifier:
         See also
         --------
         mcc : convenience method for calculating MCC
-
         """
         phi = ((self.tp * self.tn - self.fp * self.fn) /
                np.sqrt(np.float((self.tp + self.fp) * (self.tp + self.fn) *
@@ -189,7 +182,6 @@ class BinaryClassifier:
         See also
         --------
         matthews_correlation_coefficient : more information about the statistic
-
         """
         return self.matthews_correlation_coefficient()
 
@@ -205,7 +197,6 @@ class BinaryClassifier:
         where
         - TP : True Positives
         - FN : False Negatives
-
         """
         tp = self.n_true_positives
         fn = self.n_false_negatives
@@ -216,7 +207,7 @@ class BinaryClassifier:
 
     @property
     def specificity(self):
-        """Specificity or True Negative Rate
+        """Specificity or True Negative Rate.
 
         Statistic describing ratio of true negatives identified,
         which also says something about the avoidance of false positives.
@@ -226,7 +217,6 @@ class BinaryClassifier:
         where
         - TN : True Negatives
         - FP : False Positives
-
         """
         tn = self.n_true_negatives
         fp = self.n_false_positives
@@ -240,7 +230,6 @@ class BinaryClassifier:
         """True Positive Rate. Synonym for sensitivity.
 
         See sensitiviy for description.
-
         """
         return self.sensitivity
 
@@ -249,7 +238,6 @@ class BinaryClassifier:
         """True Negative Rate. Synonym for specificity.
 
         See specificity for description.
-
         """
         return self.specificity
 

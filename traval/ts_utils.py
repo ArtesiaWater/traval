@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def mask_corrections_as_nan(series, mask):
-    """Get corrections series with NaNs where mask == True
+    """Get corrections series with NaNs where mask == True.
 
     Parameters
     ----------
@@ -18,7 +18,6 @@ def mask_corrections_as_nan(series, mask):
     -------
     c : pd.Series
         return corrections series
-
     """
     c = pd.Series(index=series.index, data=np.zeros(series.index.size),
                   fastpath=True, dtype=float)
@@ -27,7 +26,7 @@ def mask_corrections_as_nan(series, mask):
 
 
 def resample_short_series_to_long_series(short_series, long_series):
-    """Resample a short timeseries with a few observations to index from a 
+    """Resample a short timeseries with a few observations to index from a
     longer timeseries.
 
     First uses 'ffill' then 'bfill' to fill new series.
@@ -43,7 +42,6 @@ def resample_short_series_to_long_series(short_series, long_series):
     -------
     new_series : pd.Series
         series with index from long_series and data from short_series
-
     """
     new_series = pd.Series(index=long_series.index, dtype=float)
 
@@ -76,7 +74,6 @@ def diff_with_gap_awareness(series, max_gap="7D"):
     diff : pd.Series
         timeseries with diff, with NaNs whenever two values are farther apart
         than max_gap.
-
     """
     diff = series.diff()
     # identify gaps and set diff value after gap to nan
@@ -100,20 +97,19 @@ def spike_finder(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
     threshold : float, optional
         the minimum size of the jump to qualify as a spike, by default 0.15
     spike_tol : float, optional
-        offset between value of timeseries before spike and after spike, 
+        offset between value of timeseries before spike and after spike,
         by default 0.15. After a spike, the value of the timeseries is usually
         close to but not identical to the value that preceded the spike. Use
         this parameter to control how close the value has to be.
     max_gap : str, optional
-        only considers observations within this maximum gap 
-        between measurements to calculate diff, by default "7D". 
+        only considers observations within this maximum gap
+        between measurements to calculate diff, by default "7D".
 
     Returns
     -------
     upspikes, downspikes : pandas.DateTimeIndex
         pandas DateTimeIndex objects containing timestamps of upward and
         downward spikes.
-
     """
 
     # identify gaps and set diff value after gap to nan
@@ -143,7 +139,8 @@ def spike_finder(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
 
 
 def bandwidth_moving_avg_n_sigma(series, window, n):
-    """Calculate bandwidth around timeseries based moving average and 
+    """Calculate bandwidth around timeseries based moving average and.
+
     n * standard deviation.
 
     Parameters
@@ -159,7 +156,6 @@ def bandwidth_moving_avg_n_sigma(series, window, n):
     -------
     bandwidth : pd.DataFrame
         dataframe with 2 columns, with lower and upper bandwidth
-
     """
     avg = series.rolling(window).mean()
     nstd = series.std() * n
@@ -170,12 +166,12 @@ def bandwidth_moving_avg_n_sigma(series, window, n):
 
 
 def interpolate_series_to_new_index(series, new_index):
-    """Interpolate timeseries to new DateTimeIndex
+    """Interpolate timeseries to new DateTimeIndex.
 
     Parameters
     ----------
     series : pd.Series
-        original series 
+        original series
     new_index : DateTimeIndex
         new index to interpolate series to
 
@@ -183,7 +179,6 @@ def interpolate_series_to_new_index(series, new_index):
     -------
     si : pd.Series
         new series with new index, with interpolated values
-
     """
     # interpolate to new index
     s_interp = np.interp(new_index, series.index.asi8, series.values)
@@ -193,11 +188,11 @@ def interpolate_series_to_new_index(series, new_index):
 
 
 def create_synthetic_raw_timeseries(raw_series, truth_series, comments):
-    """Create synthetic raw timeseries. Updates 'truth_series'
-    (where values are labelled with a comment) with values from raw_series.
+    """Create synthetic raw timeseries. Updates 'truth_series' (where values
+    are labelled with a comment) with values from raw_series.
 
     Used for removing unlabeled changes between a raw and validated
-    timeseries. 
+    timeseries.
 
     Parameters
     ----------
@@ -207,14 +202,13 @@ def create_synthetic_raw_timeseries(raw_series, truth_series, comments):
         timeseries with validated data
     comments : pd.Series
         timeseries with comments. Index must be same as 'truth_series'.
-        When value does not have a comment it must be an empty string: ''. 
+        When value does not have a comment it must be an empty string: ''.
 
     Returns
     -------
     s : pd.Series
         synthetic raw timeseries, same as truth_series but updated with
         raw_series where value has been commented.
-
     """
 
     if truth_series.index.symmetric_difference(comments.index).size > 0:

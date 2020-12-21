@@ -38,11 +38,10 @@ class Detector:
     See also
     --------
     RuleSet : object for defining detection algorithms
-
     """
 
     def __init__(self, series, truth=None):
-        """Initialize Detector object
+        """Initialize Detector object.
 
         Parameters
         ----------
@@ -51,7 +50,6 @@ class Detector:
         truth : pd.Series or pd.DataFrame, optional
             series that represents the 'truth', i.e. a benchmark to which
             the error detection result can be compared, by default None
-
         """
         # validate input series
         name = self._validate_input_series(series)
@@ -71,7 +69,7 @@ class Detector:
 
     @staticmethod
     def _validate_input_series(series):
-        """internal method for checking type and dtype of series
+        """internal method for checking type and dtype of series.
 
         Parameters
         ----------
@@ -83,7 +81,6 @@ class Detector:
         ------
         TypeError
             if series or dtype of series does not comply
-
         """
 
         # check pd.Series or pd.DataFrame
@@ -103,15 +100,14 @@ class Detector:
         return name
 
     def reset(self):
-        """Reset Detector object
-        """
+        """Reset Detector object."""
         for attr in ["ruleset", "results",
                      "corrections", "comparisons"]:
             if hasattr(self, attr):
                 delattr(self, attr)
 
     def apply_ruleset(self, ruleset, compare=True):
-        """Apply RuleSet to series
+        """Apply RuleSet to series.
 
         Parameters
         ----------
@@ -120,15 +116,14 @@ class Detector:
         compare : bool or list of int, optional
             if True, compare all results to original series and store in
             dictionary under comparisons attribute, default is True. If False,
-            do not store comparisons. If list of int, store only those step 
-            numbers as comparisons. Note: value of -1 refers to last step 
+            do not store comparisons. If list of int, store only those step
+            numbers as comparisons. Note: value of -1 refers to last step
             for convenience.
 
 
         See also
         --------
         RuleSet : object for defining detection algorithms
-
         """
         self.ruleset = ruleset
         d, c = self.ruleset(self.series)
@@ -162,7 +157,7 @@ class Detector:
                             s, self.truth, base)
 
     def set_truth(self, truth):
-        """set 'truth' series. 
+        """set 'truth' series.
 
         Used for comparison with detection result.
 
@@ -171,7 +166,6 @@ class Detector:
         truth : pd.Series or pd.DataFrame
             Series or DataFrame containing the "truth", i.e. a benchmark
             to compare the detection result to.
-
         """
         self._validate_input_series(truth)
         self.truth = truth
@@ -188,15 +182,14 @@ class Detector:
         truth : pd.Series or pd.DataFrame, optional
             series representing the "truth", i.e. a benchmark to which the
             resulting series is compared. By default None, which uses the
-            stored truth series. Argument is included so a different truth 
+            stored truth series. Argument is included so a different truth
             can be passed.
 
         Returns
         -------
         confusion_matrix : pd.DataFrame
-            confusion matrix containing counts of true positives, 
+            confusion matrix containing counts of true positives,
             false positives, true negatives and false negatives.
-
         """
         pass
 

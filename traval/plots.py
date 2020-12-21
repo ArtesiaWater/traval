@@ -134,28 +134,28 @@ class ComparisonPlots:
 def roc_plot(tpr, fpr, labels, ax=None, plot_diagonal=True, **kwargs):
     """Receiver operator characteristic plot.
 
-    Plots the false positive rate (x-axis) versus the 
+    Plots the false positive rate (x-axis) versus the
     true positive rate (y-axis). The 'tpr' and 'fpr' can be passed as:
     - values: outcome of a single error detection algorithm
-    - arrays: outcomes of error detection algorithm in which a detection 
-      parameter is varied. 
+    - arrays: outcomes of error detection algorithm in which a detection
+      parameter is varied.
     - lists: for passing multiple results, entries can be values or
-      arrays, as listed above. 
+      arrays, as listed above.
 
     Parameters
     ----------
     tpr : list or value or array
-        true positive rate. If passed as a list loops through each 
+        true positive rate. If passed as a list loops through each
         entry and plots it. Otherwise just plots the array or value.
     fpr : list or value or array
-        false positive rate. If passed as a list loops through each 
+        false positive rate. If passed as a list loops through each
         entry and plots it. Otherwise just plots the array or value.
     labels : list or str
         label for each tpr/fpr entry.
     ax : matplotlib.pyplot.Axes, optional
         axes to plot on, default is None, which creates new figure
     plot_diagonal : bool, optional
-        whether to plot the diagonal (useful for combining multiple 
+        whether to plot the diagonal (useful for combining multiple
         ROC plots)
     **kwargs
         passed to ax.plot
@@ -164,7 +164,6 @@ def roc_plot(tpr, fpr, labels, ax=None, plot_diagonal=True, **kwargs):
     -------
     ax : matplotlib.pyplot.Axes
         axes instance
-
     """
     if not isinstance(tpr, list):
         tpr = [tpr]

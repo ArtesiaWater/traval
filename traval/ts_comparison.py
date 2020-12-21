@@ -6,12 +6,10 @@ from .plots import ComparisonPlots
 
 
 class DateTimeIndexComparison:
-    """Helper class for comparing two DateTimeIndexes.
-
-    """
+    """Helper class for comparing two DateTimeIndexes."""
 
     def __init__(self, idx1, idx2):
-        """Create object for comparing DateTimeIndex objects
+        """Create object for comparing DateTimeIndex objects.
 
         Parameters
         ----------
@@ -19,47 +17,43 @@ class DateTimeIndexComparison:
             DateTimeIndex #1
         idx2 : DateTimeIndex
             DateTimeIndex #2
-
         """
         self.idx1 = idx1
         self.idx2 = idx2
 
     def idx_in_both(self):
-        """Index members in both DateTimeIndexes
+        """Index members in both DateTimeIndexes.
 
         Returns
         -------
         DateTimeIndex
             index with entries in both
-
         """
         return self.idx1.intersection(self.idx2)
 
     def idx_in_idx1(self):
-        """Index members only in Index #1
+        """Index members only in Index #1.
 
         Returns
         -------
         DateTimeIndex
             index with entries only in index #1
-
         """
         return self.idx1.difference(self.idx2)
 
     def idx_in_idx2(self):
-        """Index members only in Index #2
+        """Index members only in Index #2.
 
         Returns
         -------
         DateTimeIndex
             index with entries only in index #2
-
         """
         return self.idx2.difference(self.idx1)
 
 
 class SeriesComparison:
-    """Object for comparing two timeseries
+    """Object for comparing two timeseries.
 
     Comparison yields the following categories:
     - in_both_identical: in both series and difference <= than diff_threshold
@@ -79,11 +73,10 @@ class SeriesComparison:
         value beyond which a difference is considered significant, by
         default 0.0. Two values whose difference is smaller than threshold
         are considered identical.
-
     """
 
     def __init__(self, s1, s2, names=None, diff_threshold=0.0):
-        """Compare two timeseries
+        """Compare two timeseries.
 
         Parameters
         ----------
@@ -98,7 +91,6 @@ class SeriesComparison:
             value beyond which a difference is considered significant, by
             default 0.0. Two values whose difference is smaller than threshold
             are considered identical.
-
         """
         self.diff_threshold = diff_threshold
 
@@ -134,7 +126,7 @@ class SeriesComparison:
 
     @staticmethod
     def _parse_series(series):
-        """internal method to parse timeseries input
+        """internal method to parse timeseries input.
 
         Parameters
         ----------
@@ -152,7 +144,6 @@ class SeriesComparison:
         ------
         TypeError
             if series is not of type pd.Series or pd.DataFrame
-
         """
         if isinstance(series, pd.DataFrame):
             return series.iloc[:, 0], series.iloc[:, 1]
@@ -162,8 +153,7 @@ class SeriesComparison:
             raise TypeError("Provide pandas.Series or pandas.DataFrame!")
 
     def _compare_indices_with_nans(self):
-        """internal method for identifying indices with NaNs in both series
-        """
+        """internal method for identifying indices with NaNs in both series."""
         nanmask1 = self.s1n.isna()
         nanmask2 = self.s2n.isna()
 
@@ -173,8 +163,7 @@ class SeriesComparison:
         self.idx_in_both_nan = idxcomp_nan.idx_in_both()
 
     def _compare_indices_without_nans(self):
-        """internal method for identifying overlapping and unique indices
-        """
+        """internal method for identifying overlapping and unique indices."""
         idxcomp = DateTimeIndexComparison(self.s1.index, self.s2.index)
 
         self.idx_in_both = idxcomp.idx_in_both()
@@ -182,14 +171,13 @@ class SeriesComparison:
         self.idx_in_s2 = idxcomp.idx_in_idx2()
 
     def _compare_series_values(self):
-        """internal method for identifying different identical values
+        """internal method for identifying different identical values.
 
         Returns
         -------
         different_idx, identical_idx : DateTimeIndex, DateTimeIndex
             DateTimeIndexes containing index members where values are
             different and identical, respectively.
-
         """
         diff = self.s1.loc[self.idx_in_both] - self.s2.loc[self.idx_in_both]
         different_idx = self.idx_in_both[diff.abs() > self.diff_threshold]
@@ -197,14 +185,13 @@ class SeriesComparison:
         return different_idx, identical_idx
 
     def _summarize_series_comparison(self):
-        """internal method for summarizing comparison
+        """internal method for summarizing comparison.
 
         Returns
         -------
         summary: pandas.Series
             Series summarizing the series comparison, containing counts
             per category
-
         """
         categories = ["in_both_identical",
                       "in_both_different",
@@ -231,8 +218,7 @@ class SeriesComparison:
         Raises
         ------
         ValueError
-            if no comment series is found 
-
+            if no comment series is found
         """
 
         if self.c2n.empty:
@@ -256,8 +242,8 @@ class SeriesComparison:
         return summary.sort_index(axis=1)
 
     def _check_idx_comparison(self, return_missing=False):
-        """internal method for verifying comparison, used for debugging
-        during development.
+        """internal method for verifying comparison, used for debugging during
+        development.
 
         Ensures the counts match total length of union series indices. Returns
         False if there are any missing members, otherwise returns True.
@@ -275,7 +261,6 @@ class SeriesComparison:
         missing : DateTimeIndex
             only returned if return_missing=True, contains missing members
             from comparison.
-
         """
         seriesindexunion = self.s1.index.union(self.s2.index)
         missing = (self.idx_in_both_nan
@@ -297,7 +282,7 @@ class SeriesComparison:
 
 
 class SeriesComparisonRelative(SeriesComparison):
-    """Object for comparing two timeseries relative to a third timeseries
+    """Object for comparing two timeseries relative to a third timeseries.
 
     Extends the SeriesComparison object to include a comparison between
     two timeseries and a third base timeseries. This is used for example, when
@@ -313,7 +298,7 @@ class SeriesComparisonRelative(SeriesComparison):
     - in_all_nan: value is NaN in all timeseries (series #1, #2 and base)
     - introduced_in_s1: value is NaN/missing in base but has value in series #1
     - introduced_in_s2: value is NaN/missing in base but has value in series #2
-    - introduced_in_both: value is NaN/missing in base but has value in both 
+    - introduced_in_both: value is NaN/missing in base but has value in both
       timeseries
 
     Parameters
@@ -334,11 +319,10 @@ class SeriesComparisonRelative(SeriesComparison):
     See also
     --------
     SeriesComparison : Comparison of two timeseries relative to each other
-
     """
 
     def __init__(self, s1, truth, base, diff_threshold=0.0):
-        """Compare two timeseries relative to a base timeseries
+        """Compare two timeseries relative to a base timeseries.
 
         Parameters
         ----------
@@ -353,7 +337,6 @@ class SeriesComparisonRelative(SeriesComparison):
             value beyond which a difference is considered significant, by
             default 0.0. Two values whose difference is smaller than threshold
             are considered identical.
-
         """
 
         # Do the original comparison between s1 and s2
@@ -377,8 +360,7 @@ class SeriesComparisonRelative(SeriesComparison):
         self.bc = BinaryClassifier.from_series_comparison_relative(self)
 
     def _compare_series_to_base(self):
-        """internal method for comparing two timseries to base timeseries
-        """
+        """internal method for comparing two timseries to base timeseries."""
 
         # where Nans in base timeseries
         nanmask = self.basen.isna()
@@ -415,14 +397,13 @@ class SeriesComparisonRelative(SeriesComparison):
                                              self.basen.index)))
 
     def _summarize_comparison_to_base(self):
-        """internal method for summarizing comparison with base timeseries
+        """internal method for summarizing comparison with base timeseries.
 
         Returns
         -------
         summary : pandas.Series
-            Series summarizing the series comparison relative to base 
+            Series summarizing the series comparison relative to base
             timeseries, containing counts per category
-
         """
         categories = ['kept_in_both',
                       'flagged_in_s1',
@@ -446,14 +427,13 @@ class SeriesComparisonRelative(SeriesComparison):
         -------
         comparison : pd.Series
             Series containing the number of observations in each possible
-            comparison category, but split per unique comment. Comments must 
-            be provided via 'truth' series (series2). 
+            comparison category, but split per unique comment. Comments must
+            be provided via 'truth' series (series2).
 
         Raises
         ------
         ValueError
             if no comment series is available.
-
         """
 
         if self.c2n.empty:

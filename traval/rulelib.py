@@ -10,8 +10,8 @@ from .ts_utils import (mask_corrections_as_nan,
 
 
 def rule_funcdict_to_nan(series, funcdict):
-    """Detection rule using dictionary of functions to identify
-    suspect values and set them to NaN.
+    """Detection rule using dictionary of functions to identify suspect values
+    and set them to NaN.
 
     Parameters
     ----------
@@ -29,7 +29,6 @@ def rule_funcdict_to_nan(series, funcdict):
         a series with same index as the input timeseries containing
         corrections. Suspect values (according to the provided functions)
         are set to np.nan.
-
     """
     for i, func in enumerate(funcdict.values()):
         if i == 0:
@@ -40,18 +39,18 @@ def rule_funcdict_to_nan(series, funcdict):
 
 
 def rule_max_gradient(series, max_step=0.5, max_timestep="1D"):
-    """Detection rule, set values tot NaN when maximum gradient 
-    between two observations is exceeded.
+    """Detection rule, set values tot NaN when maximum gradient between two
+    observations is exceeded.
 
     Parameters
     ----------
     series : pd.Series
         timeseries in which suspect values are identified
     max_step : float, optional
-        max jump between two observations within given timestep, 
+        max jump between two observations within given timestep,
         by default 0.5
     timestep : str, optional
-        maximum timestep to consider, by default "1D". The gradient is not 
+        maximum timestep to consider, by default "1D". The gradient is not
         calculated for values that lie farther apart.
 
     Returns
@@ -59,7 +58,6 @@ def rule_max_gradient(series, max_step=0.5, max_timestep="1D"):
     corrections: pd.Series
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
-
     """
     conversion = pd.Timedelta(max_timestep) / pd.Timedelta("1S")
     grad = (series.diff() /
@@ -69,12 +67,12 @@ def rule_max_gradient(series, max_step=0.5, max_timestep="1D"):
 
 
 def rule_ufunc_threshold(series, ufunc, threshold, offset=0.0):
-    """Detection rule, set values to Nan based on operator function 
-    and threshold value.
+    """Detection rule, set values to Nan based on operator function and
+    threshold value.
 
-    The argument ufunc is a tuple containing an operator function (i.e. '>', 
-    '<', '>=', '<='). These are passed using their named equivalents, e.g. in 
-    numpy: np.greater, np.less, np.greater_equal, np.less_equal. This function 
+    The argument ufunc is a tuple containing an operator function (i.e. '>',
+    '<', '>=', '<='). These are passed using their named equivalents, e.g. in
+    numpy: np.greater, np.less, np.greater_equal, np.less_equal. This function
     essentially does the following: ufunc(series, threshold).
 
     Parameters
@@ -82,13 +80,13 @@ def rule_ufunc_threshold(series, ufunc, threshold, offset=0.0):
     series : pd.Series
         timeseries in which suspect values are identified
     ufunc : tuple
-        tuple containing ufunc (i.e. (numpy.greater_equal,) ). The function 
+        tuple containing ufunc (i.e. (numpy.greater_equal,) ). The function
         must be callable according to `ufunc(series, threshold)`. The function
-        is passed as a tuple to bypass RuleSet logic. 
+        is passed as a tuple to bypass RuleSet logic.
     threshold : float or pd.Series
         value or timeseries to compare series with
     offset : float, optional
-        value that is added to the threshold, e.g. if some extra tolerance is 
+        value that is added to the threshold, e.g. if some extra tolerance is
         allowable. Default value is 0.0.
 
     Returns
@@ -96,7 +94,6 @@ def rule_ufunc_threshold(series, ufunc, threshold, offset=0.0):
     corrections: pd.Series
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
-
     """
     ufunc = ufunc[0]
     if isinstance(threshold, pd.Series):
@@ -110,13 +107,13 @@ def rule_ufunc_threshold(series, ufunc, threshold, offset=0.0):
 
 def rule_diff_ufunc_threshold(series, ufunc, threshold, max_gap="7D"):
     """Detection rule, calculate diff of series and identify suspect
-    observations based on comparison with threshold value. 
+    observations based on comparison with threshold value.
 
-    The argument ufunc is a tuple containing a function, e.g. an operator 
-    function (i.e. '>', '<', '>=', '<='). These are passed using their named 
-    equivalents, e.g. in numpy: np.greater, np.less, np.greater_equal, 
-    np.less_equal. This function essentially does the following: 
-    ufunc(series, threshold_series). The argument is passed as a tuple to 
+    The argument ufunc is a tuple containing a function, e.g. an operator
+    function (i.e. '>', '<', '>=', '<='). These are passed using their named
+    equivalents, e.g. in numpy: np.greater, np.less, np.greater_equal,
+    np.less_equal. This function essentially does the following:
+    ufunc(series, threshold_series). The argument is passed as a tuple to
     bypass RuleSet logic.
 
     Parameters
@@ -124,21 +121,20 @@ def rule_diff_ufunc_threshold(series, ufunc, threshold, max_gap="7D"):
     series : pd.Series
         timeseries in which suspect values are identified
     ufunc : tuple
-        tuple containing ufunc (i.e. (numpy.greater_equal,) ). The function 
+        tuple containing ufunc (i.e. (numpy.greater_equal,) ). The function
         must be callable according to `ufunc(series, threshold)`. The function
-        is passed as a tuple to bypass RuleSet logic. 
+        is passed as a tuple to bypass RuleSet logic.
     threshold : float
         value to compare diff of timeseries to
     max_gap : str, optional
-        only considers observations within this maximum gap 
-        between measurements to calculate diff, by default "7D". 
+        only considers observations within this maximum gap
+        between measurements to calculate diff, by default "7D".
 
     Returns
     -------
     corrections: pd.Series
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
-
     """
     ufunc = ufunc[0]
     # identify gaps and set diff value after gap to nan
@@ -148,13 +144,13 @@ def rule_diff_ufunc_threshold(series, ufunc, threshold, max_gap="7D"):
 
 
 def rule_other_ufunc_threshold(series, other, ufunc, threshold):
-    """Detection rule, set values to Nan based on comparison of another 
+    """Detection rule, set values to Nan based on comparison of another
     timeseries with a threshold value.
 
-    The argument ufunc is a tuple containing an operator function (i.e. '>', 
-    '<', '>=', '<='). These are passed using their named equivalents, e.g. in 
-    numpy: np.greater, np.less, np.greater_equal, np.less_equal. This function 
-    essentially does the following: ufunc(series, threshold_series). The 
+    The argument ufunc is a tuple containing an operator function (i.e. '>',
+    '<', '>=', '<='). These are passed using their named equivalents, e.g. in
+    numpy: np.greater, np.less, np.greater_equal, np.less_equal. This function
+    essentially does the following: ufunc(series, threshold_series). The
     argument is passed as a tuple to bypass RuleSet logic.
 
     Parameters
@@ -165,9 +161,9 @@ def rule_other_ufunc_threshold(series, other, ufunc, threshold):
     other : pd.Series
         other timeseries based on which suspect values are identified
     ufunc : tuple
-        tuple containing ufunc (i.e. (numpy.greater_equal,) ). The function 
+        tuple containing ufunc (i.e. (numpy.greater_equal,) ). The function
         must be callable according to `ufunc(series, threshold)`. The function
-        is passed as a tuple to bypass RuleSet logic. 
+        is passed as a tuple to bypass RuleSet logic.
     threshold : float
         value to compare timeseries to
 
@@ -176,7 +172,6 @@ def rule_other_ufunc_threshold(series, other, ufunc, threshold):
     corrections: pd.Series
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
-
     """
     ufunc = ufunc[0]
     mask = ufunc(other, threshold)
@@ -197,20 +192,19 @@ def rule_spike_detection(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
     threshold : float, optional
         the minimum size of the jump to qualify as a spike, by default 0.15
     spike_tol : float, optional
-        offset between value of timeseries before spike and after spike, 
+        offset between value of timeseries before spike and after spike,
         by default 0.15. After a spike, the value of the timeseries is usually
         close to but not identical to the value that preceded the spike. Use
         this parameter to control how close the value has to be.
     max_gap : str, optional
-        only considers observations within this maximum gap 
-        between measurements to calculate diff, by default "7D". 
+        only considers observations within this maximum gap
+        between measurements to calculate diff, by default "7D".
 
     Returns
     -------
     corrections: pd.Series
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
-
     """
     upspikes, downspikes = spike_finder(series,
                                         threshold=threshold,
@@ -226,8 +220,8 @@ def rule_offset_detection(series, threshold=0.35, updown_diff=0.1,
 
     This rule looks for jumps in both positive and negative direction that
     are larger than a particular threshold. It then tries to match jumps
-    in upward direction to one in downward direction of a similar size. If 
-    this is possible, all observations between two matching but oppposite 
+    in upward direction to one in downward direction of a similar size. If
+    this is possible, all observations between two matching but oppposite
     jumps are set to NaN.
 
     Parameters
@@ -240,10 +234,10 @@ def rule_offset_detection(series, threshold=0.35, updown_diff=0.1,
         the maximum difference between two opposite jumps to consider them
         matching, by default 0.1
     max_gap : str, optional
-        only considers observations within this maximum gap 
+        only considers observations within this maximum gap
         between measurements to calculate diff, by default "7D".
     return_df : bool, optional
-        return the dataframe containing the potential offsets, 
+        return the dataframe containing the potential offsets,
         by default False
 
     Returns
@@ -251,7 +245,6 @@ def rule_offset_detection(series, threshold=0.35, updown_diff=0.1,
     corrections: pd.Series
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
-
     """
 
     # identify gaps and set diff value after gap to nan
@@ -325,9 +318,10 @@ def rule_outside_n_sigma(series, n=2.0):
 
 
 def rule_diff_outside_of_n_sigma(series, n, max_gap="7D"):
-    """Detection rule, calculate diff of series and identify suspect
-    observations based on values outside of n * standard deviation of the 
-    difference. 
+    """Detection rule, calculate diff of series and identify suspect.
+
+    observations based on values outside of n * standard deviation of the
+    difference.
 
     Parameters
     ----------
@@ -336,15 +330,14 @@ def rule_diff_outside_of_n_sigma(series, n, max_gap="7D"):
     n : float, optional
         number of standard deviations to use, by default 2
     max_gap : str, optional
-        only considers observations within this maximum gap 
-        between measurements to calculate diff, by default "7D". 
+        only considers observations within this maximum gap
+        between measurements to calculate diff, by default "7D".
 
     Returns
     -------
     corrections: pd.Series
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
-
     """
 
     # identify gaps and set diff value after gap to nan
@@ -362,10 +355,10 @@ def rule_outside_bandwidth(series, lowerbound, upperbound):
     series : pd.Series
         timeseries in which suspect values are identified
     lowerbound : pd.Series
-        timeseries containing the lower bound, if bound values are less 
+        timeseries containing the lower bound, if bound values are less
         frequent than series, bound is interpolated to series.index
     upperbound : pd.Series
-        timeseries containing the upper bound, if bound values are less 
+        timeseries containing the upper bound, if bound values are less
         frequent than series, bound is interpolated to series.index
 
     Returns
@@ -373,7 +366,6 @@ def rule_outside_bandwidth(series, lowerbound, upperbound):
     corrections : pd.Series
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
-
     """
     if series.index.symmetric_difference(lowerbound.index).size > 0:
         lowerbound = interpolate_series_to_new_index(lowerbound, series.index)
@@ -385,10 +377,10 @@ def rule_outside_bandwidth(series, lowerbound, upperbound):
 
 
 def rule_pastas_outside_pi(series, ml, ci=0.95, solve=False):
-    """Detection rule, mark observations as suspect outside prediction 
-    interval calculated by pastas timeseries model.
+    """Detection rule, mark observations as suspect outside prediction interval
+    calculated by pastas timeseries model.
 
-    Uses a pastas.Model and a confidence interval as input. 
+    Uses a pastas.Model and a confidence interval as input.
 
     Parameters
     ----------
@@ -397,11 +389,11 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, solve=False):
     ml : pastas.Model
         timeseries model for series
     ci : float, optional
-        confidence interval for calculating bandwidth, by default 0.95. 
+        confidence interval for calculating bandwidth, by default 0.95.
         Higher confidence interval means that bandwidth is wider and more
         observations will fall within the bounds.
     solve : bool, optional
-        solve the timeseries model prior to calculating the prediction 
+        solve the timeseries model prior to calculating the prediction
         interval, by default False
 
     Returns
@@ -409,7 +401,6 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, solve=False):
     corrections : pd.Series
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
-
     """
 
     if solve:
@@ -445,15 +436,14 @@ def rule_keep_comments(series, keep_comments, comment_series, other_series):
     comment_series : pd.Series
         timeseries containing comments, should have same index as series
     other_series : pd.Series
-        timeseries containing corrected/adjusted values corresponding 
-        to the commmented entries. 
+        timeseries containing corrected/adjusted values corresponding
+        to the commmented entries.
 
     Returns
     -------
     corrections : pd.Series
-        timeseries containing NaN values where comment is in keep_comments 
+        timeseries containing NaN values where comment is in keep_comments
         and 0 otherwise.
-
     """
     new_series = series.copy()
     for c in keep_comments:
@@ -481,14 +471,14 @@ def rule_shift_to_manual_obs(series, hseries, method="linear",
     hseries : pd.Series
         timeseries containing manual observations
     method : str, optional
-        method to use for interpolating between two manual observations, 
+        method to use for interpolating between two manual observations,
         by default "linear". Other options are those that are accepted by
         series.reindex(): 'bfill', 'ffill', 'nearest'.
     max_dt : str, optional
         maximum amount of time between manual observation and value in
         series, by default "1D"
     reset_dates : list, optional
-        list of dates  (as str or pd.Timestamp) on which to reset the 
+        list of dates  (as str or pd.Timestamp) on which to reset the
         adjustments to 0.0, by default None. Useful for resetting the
         adjustments when the sensor is replaced, for example.
 
@@ -497,7 +487,6 @@ def rule_shift_to_manual_obs(series, hseries, method="linear",
     adjusted_series :  pd.Series
         timeseries containing adjustments to shift series onto manual
         observations.
-
     """
     # check if time between manual obs and sensor obs
     # are further apart than max_dt:
@@ -538,15 +527,14 @@ def rule_combine_nan(*args):
     """Combination rule, combine NaN values for any number of timeseries.
 
     Used for combining intermediate results in branching algorithm trees to
-    create one final result. 
+    create one final result.
 
     Returns
     -------
     corrections : pd.Series
-        a series with same index as the input timeseries containing 
-        corrections. Contains NaNs where any of the input series 
+        a series with same index as the input timeseries containing
+        corrections. Contains NaNs where any of the input series
         values is NaN.
-
     """
     for i, series in enumerate(args):
         if i == 0:
