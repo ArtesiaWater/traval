@@ -1,3 +1,4 @@
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/b1fd0320965b42f58ecc2c3d1b6b7df0)](https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ArtesiaWater/traval&amp;utm_campaign=Badge_Grade)
 # traval
 
 Tools for applying automatic error detection algorithms to timeseries.
