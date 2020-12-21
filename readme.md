@@ -11,18 +11,14 @@ Tools for applying automatic error detection algorithms to timeseries.
 This module is set up to provide tools for applying any error detection 
 algorithm to any timeseries. The module consists of three main components:
 
--   `RuleSet`: the RuleSet object is a highly flexible object for defining 
-    error detection algorithms based on (user-defined) functions.
--   `Detector`: a data management object for storing timeseries and error 
-    detection results.
--   `SeriesComparison*`: objects for comparing timeseries. These objects 
-    include plots for visualizing the comparisons.
+-   `RuleSet`: the RuleSet object is a highly flexible object for defining error detection algorithms based on (user-defined) functions.
+-   `Detector`: a data management object for storing timeseries and error detection results.
+-   `SeriesComparison*`: objects for comparing timeseries. These objects include plots for visualizing the comparisons.
 
 The general workflow consists of the following steps:
 
 1.  Define error detection algorithm(s).
-2.  Load data, i.e. raw timeseries data and optionally timeseries representing 
-    the "truth" to see how well the algorithms perform.
+2.  Load data, i.e. raw timeseries data and optionally timeseries representing the "truth" to see how well the algorithms perform.
 3.  Initialize Detector objects and apply algorithms to timeseries.
 4.  Store and analyze the results.
 
@@ -67,10 +63,10 @@ Take a look at the ruleset by just typing `ruleset`:
 >>> ruleset
 ```
 
-```
+```text
 RuleSet: 'my_first_algorithm'
   step: name            apply_to
-      1: rule1                  0
+     1: rule1                  0
 ```
 
 Next define a Detector object. This object is designed to store a timeseries 
