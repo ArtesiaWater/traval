@@ -542,11 +542,11 @@ if __name__ == "__main__":
                           .intersection(s1s2intersect)
                           .union(s1s2intersect.difference(orig.index)))
 
-    testdf.loc[removed_in_both]
-    testdf.loc[removed_in_s1]
-    testdf.loc[removed_in_s2]
-    testdf.loc[kept_in_both]
-    testdf.loc[nan_in_all]
-    testdf.loc[introduced_in_s1]
-    testdf.loc[introduced_in_s2]
-    testdf.loc[introduced_in_both]
+    # testdf.loc[removed_in_both]
+    # testdf.loc[removed_in_s1]
+    # testdf.loc[removed_in_s2]
+    # testdf.loc[kept_in_both]
+    # testdf.loc[nan_in_all]
+    # testdf.loc[introduced_in_s1]
+    # testdf.loc[introduced_in_s2]
+    # testdf.loc[introduced_in_both]

@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
     cpp = ComparisonPlots(scr)
     cpp.plot_relative_comparison(
-        mark_unique=True, mark_diff=True,
+        mark_unique=True, mark_different=True,
         mark_identical=True, mark_introduced=True)
 
     # the other test

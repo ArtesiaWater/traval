@@ -3,10 +3,10 @@ import pandas as pd
 from operator import or_
 
 from .ts_utils import (mask_corrections_as_nan,
-                      diff_with_gap_awareness,
-                      resample_short_series_to_long_series,
-                      interpolate_series_to_new_index,
-                      spike_finder)
+                       diff_with_gap_awareness,
+                       resample_short_series_to_long_series,
+                       interpolate_series_to_new_index,
+                       spike_finder)
 
 
 def rule_funcdict_to_nan(series, funcdict):
@@ -637,8 +637,8 @@ if __name__ == "__main__":
     date_range = pd.date_range("2020-01-01", freq="D", periods=10)
     s1 = pd.Series(index=date_range, data=np.arange(10))
     fdict = {
-        "lt_3" : lambda s: s < 3.0,
-        "gt_7" : lambda s: s > 7.0
+        "lt_3": lambda s: s < 3.0,
+        "gt_7": lambda s: s > 7.0
     }
     c12 = rule_funcdict_to_nan(s1, fdict)
     assert c12.iloc[[0, 1, 2, -2, -1]].isna().sum() == 5
@@ -654,7 +654,6 @@ if __name__ == "__main__":
     f = rule_keep_comments(raw, ["keep"], comment_series, val)
     assert (f.loc[comment_series == "keep"] == 0).all()
     assert (f.loc[comment_series != "keep"] == 1).all()
-
 
     # rule_pastas_outside_pi
     # skip for now
