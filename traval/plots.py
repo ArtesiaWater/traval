@@ -6,6 +6,15 @@ import pandas as pd
 class ComparisonPlots:
     """Mix-in class for plots for comparing timeseries."""
 
+    color_dict = {
+        "only_in_s1": {"color": "orange"},
+        "only_in_s2": {"color": "blue"},
+        "identical": {"color": "LimeGreen", "alpha": 0.5},
+        "different": {"color": "Red", "alpha": 0.3},
+        "flagged_in_both": {"color": "DarkOrchid"},
+        "introduced": {"color": "Coral"},
+    }
+
     def __init__(self, cp):
         """Initialize comparison plots mix-in class.
 
@@ -15,6 +24,37 @@ class ComparisonPlots:
             traval comparison object
         """
         self.cp = cp
+
+    def update_color_dict(self, key, color=None, alpha=None):
+        """Update colors for plots.
+
+        Parameters
+        ----------
+        key : str
+            name of category to update, see 
+            `ComparisonPlots.color_dict.keys()` for options
+        color : str, optional
+            color name, by default None
+        alpha : float, optional
+            alpha value, by default None
+        """
+        d = self.color_dict[key]
+        if color is not None:
+            d.update({"color": color})
+        if alpha is not None:
+            d.update({"alpha": alpha})
+
+    def reset_color_dict(self):
+        """Reset color_dict to default values.
+        """
+        self.color_dict = {
+            "only_in_s1": {"color": "orange"},
+            "only_in_s2": {"color": "blue"},
+            "identical": {"color": "LimeGreen", "alpha": 0.5},
+            "different": {"color": "Red", "alpha": 0.3},
+            "flagged_in_both": {"color": "DarkOrchid"},
+            "introduced": {"color": "Coral"},
+        }
 
     def plot_series_comparison(self, mark_unique=True, mark_different=True,
                                mark_identical=True, ax=None):
@@ -59,8 +99,8 @@ class ComparisonPlots:
                     self.cp.idx_in_both_different)
                 s_diff.loc[not_diff] = np.nan
                 p2, = ax.plot(s_diff.index, s_diff, lw=3, marker=None,
-                              ls="solid", c="red", alpha=0.3,
-                              label="different")
+                              ls="solid", label="different",
+                              **self.color_dict["different"])
         # add to legend once
         if mark_different:
             plot_handles.append(p2)
@@ -72,8 +112,8 @@ class ComparisonPlots:
                 self.cp.idx_in_both_identical)
             s_identical.loc[not_identical] = np.nan
             p5, = ax.plot(s_identical.index, s_identical,
-                          marker=None, ls="solid", c="LimeGreen",
-                          label="identical", lw=3, alpha=0.5)
+                          marker=None, ls="solid", label="identical", lw=3,
+                          **self.color_dict["identical"])
             plot_handles.append(p5)
 
         # Mark unique observations with x's if they exist
@@ -81,14 +121,16 @@ class ComparisonPlots:
             if self.cp.idx_in_s1.size > 0:
                 p3, = ax.plot(self.cp.idx_in_s1,
                               self.cp.s1.loc[self.cp.idx_in_s1],
-                              marker="x", ms=5, ls="none", c="Orange",
+                              marker="x", ms=5, ls="none",
+                              **self.color_dict["only_in_s1"],
                               label="only in series 1: {}".format(
                                   self.cp.s1n.name))
                 plot_handles.append(p3)
             if self.cp.idx_in_s2.size > 0:
                 p4, = ax.plot(self.cp.idx_in_s2,
                               self.cp.s2.loc[self.cp.idx_in_s2],
-                              marker="x", ms=5, ls="none", c="Blue",
+                              marker="x", ms=5, ls="none",
+                              **self.color_dict["only_in_s2"],
                               label="only in series 2: {}".format(
                                   self.cp.s2.name))
                 plot_handles.append(p4)
@@ -147,15 +189,17 @@ class ComparisonPlots:
         plot_labels.insert(0, p0.get_label())
 
         # mark flagged in both
-        s_base = pd.Series(index=self.cp.basen.index, data=np.nan, dtype=float)
-        s_base.loc[self.cp.idx_r_flagged_in_both] = \
-            self.cp.basen.loc[self.cp.idx_r_flagged_in_both]
-        p6, = ax.plot(s_base.index,
-                      s_base, lw=0.5, c="DarkOrchid",
-                      ls="none", marker="x", ms=5,
-                      label="flagged in both")
-        plot_handles.append(p6)
-        plot_labels.append(p6.get_label())
+        if self.cp.idx_r_flagged_in_both.size > 0:
+            s_base = pd.Series(index=self.cp.basen.index, data=np.nan, dtype=float)
+            s_base.loc[self.cp.idx_r_flagged_in_both] = \
+                self.cp.basen.loc[self.cp.idx_r_flagged_in_both]
+            p6, = ax.plot(s_base.index,
+                        s_base, lw=0.5,
+                        **self.color_dict["flagged_in_both"],
+                        ls="none", marker="x", ms=5,
+                        label="flagged in both")
+            plot_handles.append(p6)
+            plot_labels.append(p6.get_label())
 
         if mark_introduced:
             intro_idx = (self.cp.idx_r_introduced_in_s2
@@ -164,11 +208,13 @@ class ComparisonPlots:
                     (intro_idx.size > 0)):
                 ax.plot(self.cp.s1n.loc[self.cp.idx_r_introduced_in_s1].index,
                         self.cp.s1n.loc[self.cp.idx_r_introduced_in_s1],
-                        c="Coral", ls="none", marker="x", ms=5,
+                        ls="none", marker="x", ms=5,
+                        **self.color_dict["introduced"],
                         label="introduced in s1/s2")
                 p7, = ax.plot(self.cp.s1n.loc[intro_idx].index,
                               self.cp.s2n.loc[intro_idx],
-                              c="Coral", ls="none", marker="x", ms=5,
+                              ls="none", marker="x", ms=5,
+                              **self.color_dict["introduced"],
                               label="introduced in s1/s2")
                 plot_handles.append(p7)
                 plot_labels.append(p7.get_label())
