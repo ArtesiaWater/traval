@@ -417,6 +417,8 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, solve=False):
 
     # calculate prediction interval
     pi = ml.fit.prediction_interval(alpha=(1 - ci))
+    if pi.empty:
+        raise ValueError("Prediction interval wasn't calculated.")
     corrections = rule_outside_bandwidth(series,
                                          pi.iloc[:, 0],
                                          pi.iloc[:, 1])
