@@ -256,7 +256,7 @@ class Detector:
         """
         resultsdf = self.get_results_dataframe()
 
-        _, axes = plt.subplots(len(self.corrections) + 1, 1,
+        fig, axes = plt.subplots(len(self.corrections) + 1, 1,
                                figsize=(12, 5), dpi=100, sharex=True,
                                sharey=True)
 
@@ -274,5 +274,6 @@ class Detector:
 
             iax.legend(loc="upper left", ncol=2)
             iax.grid(b=True)
-
+        
+        fig.tight_layout()
         return axes
