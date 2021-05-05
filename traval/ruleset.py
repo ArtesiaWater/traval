@@ -1,7 +1,7 @@
 import json
-from copy import deepcopy
 import warnings
 from collections import OrderedDict
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -235,7 +235,17 @@ class RuleSet:
         return rdf
 
     def get_parameters(self):
-        pass
+        params = pd.DataFrame()
+        cols = ["rulename", "step", "func", "parameter", "value"]
+        counter = 0
+        for rnam, irule in self.rules.items():
+            if irule["kwargs"] is None:
+                continue
+            for name, value in irule["kwargs"].items():
+                params.loc[counter, cols] = \
+                    rnam, irule["apply_to"], irule["func"], name, value
+                counter += 1
+        return params
 
     def _parse_kwargs(self, kwargs, name=None):
         """Internal method, parse keyword arguments dictionary.

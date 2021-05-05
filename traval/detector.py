@@ -1,6 +1,6 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 
 from .ts_comparison import SeriesComparison, SeriesComparisonRelative
 
@@ -135,7 +135,7 @@ class Detector:
         if compare:
             self.comparisons = {}
             base = d[0]
-            base.name = "base series"
+
             # if compare is not list, get all step numbers
             if not isinstance(compare, list):
                 compare = d.keys()
@@ -149,6 +149,7 @@ class Detector:
                 if k > 0:
                     s = d[k]
                     s.name = self.ruleset.get_step_name(k)
+                    base.name = "base series"
                     if self.truth is None:
                         self.comparisons[k] = SeriesComparison(s, base)
                     else:
@@ -231,17 +232,19 @@ class Detector:
         clist = []
         for s in self.corrections.values():
             if isinstance(s, np.ndarray):
-                s = pd.Series()
-            clist.append(s.fillna(1.0))
+                s = pd.Series(dtype=float)
+            clist.append(s.fillna(-9999))
+
         # corrections are nan, 0.0 means nothing is changed
         df = (pd.concat(clist, axis=1)
               .isna()
-              .replace(False, np.nan)
-              .replace(True, 0.0))
+              .astype(float)
+              .replace(0.0, np.nan)
+              .replace(1.0, 0.0))
         df.columns = list(self.ruleset.rules.keys())
         return df
 
-    def plot_overview(self, mark_suspects=True):
+    def plot_overview(self, mark_suspects=True, **kwargs):
         """Plot timeseries with flagged values per applied rule.
 
         Parameters
@@ -256,9 +259,14 @@ class Detector:
         """
         resultsdf = self.get_results_dataframe()
 
+        if "figsize" in kwargs:
+            figsize = kwargs.pop("figsize")
+        else:
+            figsize = (12, 5)
+
         fig, axes = plt.subplots(len(self.corrections) + 1, 1,
-                               figsize=(12, 5), dpi=100, sharex=True,
-                               sharey=True)
+                                 sharex=True, sharey=True, figsize=figsize,
+                                 **kwargs)
 
         for iax, icol in zip(axes, resultsdf):
             iax.plot(resultsdf.index, resultsdf[icol], label=icol)
@@ -274,6 +282,6 @@ class Detector:
 
             iax.legend(loc="upper left", ncol=2)
             iax.grid(b=True)
-        
+
         fig.tight_layout()
         return axes

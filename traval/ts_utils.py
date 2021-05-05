@@ -178,7 +178,8 @@ def interpolate_series_to_new_index(series, new_index):
         new series with new index, with interpolated values
     """
     # interpolate to new index
-    s_interp = np.interp(new_index, series.index.asi8, series.values)
+    s_interp = np.interp(new_index, series.index.asi8, series.values,
+                         left=np.nan, right=np.nan)
     si = pd.Series(index=new_index, data=s_interp,
                    dtype=float, fastpath=True)
     return si

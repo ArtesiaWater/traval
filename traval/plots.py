@@ -31,7 +31,7 @@ class ComparisonPlots:
         Parameters
         ----------
         key : str
-            name of category to update, see 
+            name of category to update, see
             `ComparisonPlots.color_dict.keys()` for options
         color : str, optional
             color name, by default None
@@ -45,8 +45,7 @@ class ComparisonPlots:
             d.update({"alpha": alpha})
 
     def reset_color_dict(self):
-        """Reset color_dict to default values.
-        """
+        """Reset color_dict to default values."""
         self.color_dict = {
             "only_in_s1": {"color": "orange"},
             "only_in_s2": {"color": "blue"},

@@ -165,9 +165,12 @@ class BinaryClassifier:
         --------
         mcc : convenience method for calculating MCC
         """
-        phi = ((self.tp * self.tn - self.fp * self.fn) /
-               np.sqrt(np.float((self.tp + self.fp) * (self.tp + self.fn) *
-                                (self.tn + self.fp) * (self.tn + self.fn))))
+        # avoid warning when dividing by 0,
+        # returns NaN which is what we want
+        with np.errstate(invalid='ignore'):
+            phi = ((self.tp * self.tn - self.fp * self.fn) /
+                   np.sqrt(float((self.tp + self.fp) * (self.tp + self.fn) *
+                                 (self.tn + self.fp) * (self.tn + self.fn))))
         return phi
 
     def mcc(self):

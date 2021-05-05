@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from .binary_classifier import BinaryClassifier
@@ -146,7 +147,15 @@ class SeriesComparison:
             if series is not of type pd.Series or pd.DataFrame
         """
         if isinstance(series, pd.DataFrame):
-            return series.iloc[:, 0], series.iloc[:, 1]
+            if len(series.columns) == 2:
+                return series.iloc[:, 0], series.iloc[:, 1]
+            elif len(series.columns) == 1:
+                return series.iloc[:, 0], pd.Series(dtype='object')
+            else:
+                raise ValueError("Cannot interpret DataFrame columns. "
+                                 "Pass DataFrame with first column containing "
+                                 "values, and optional second column with "
+                                 "comments.")
         elif isinstance(series, pd.Series):
             return series, pd.Series(dtype='object')
         else:
@@ -240,6 +249,31 @@ class SeriesComparison:
             summary.loc[cat, vc.index] = vc
 
         return summary.sort_index(axis=1)
+
+    def comparison_series(self):
+        """Create series that indicates what happend to a value.
+
+        Series index is the union of s1 and s2 with a value indicating
+        the status of the comparison:
+
+            - -1: value is modified
+            - 0: value stays the same
+            - 1: value only in series 1
+            - 2: value only in series 2
+            - -9999: value is NaN in both series
+
+        Returns
+        -------
+        s : pd.Series
+            series containing status of value from comparison
+        """
+        s = pd.Series(index=self.s1n.index.union(self.s2n.index), data=np.nan)
+        s.loc[self.idx_in_both_identical] = -1.
+        s.loc[self.idx_in_both_different] = 0.
+        s.loc[self.idx_in_s1] = 1.
+        s.loc[self.idx_in_s2] = 2.
+        s.loc[self.idx_in_both_nan] = -9999.
+        return s
 
     def _check_idx_comparison(self, return_missing=False):
         """Internal method for verifying comparison.

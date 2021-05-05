@@ -1,12 +1,12 @@
-import numpy as np
-import pandas as pd
 from operator import or_
 
-from .ts_utils import (mask_corrections_as_nan,
-                       diff_with_gap_awareness,
-                       resample_short_series_to_long_series,
+import numpy as np
+import pandas as pd
+
+from .ts_utils import (diff_with_gap_awareness,
                        interpolate_series_to_new_index,
-                       spike_finder)
+                       mask_corrections_as_nan,
+                       resample_short_series_to_long_series, spike_finder)
 
 
 def rule_funcdict_to_nan(series, funcdict):
@@ -385,7 +385,7 @@ def rule_outside_bandwidth(series, lowerbound, upperbound):
     return mask_corrections_as_nan(series, mask)
 
 
-def rule_pastas_outside_pi(series, ml, ci=0.95, solve=False):
+def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None):
     """Detection rule, flag values based on pastas model prediction interval.
 
     Flag suspect outside prediction interval calculated by pastas timeseries
@@ -401,9 +401,8 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, solve=False):
         confidence interval for calculating bandwidth, by default 0.95.
         Higher confidence interval means that bandwidth is wider and more
         observations will fall within the bounds.
-    solve : bool, optional
-        solve the timeseries model prior to calculating the prediction
-        interval, by default False
+    tmax : str or pd.Timestamp, optional
+        set tmax for model simulation
 
     Returns
     -------
@@ -411,18 +410,36 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, solve=False):
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
     """
+    # no model
+    if ml is None:
+        corrections = mask_corrections_as_nan(
+            series, pd.Series(index=series.index, data=False))
+        corrections.name = "sim"
+    # no fit
+    elif ml.fit is None:
+        corrections = mask_corrections_as_nan(
+            series, pd.Series(index=series.index, data=False))
+        corrections.name = "sim"
+    # calculate pi
+    else:
+        if tmin is not None:
+            ml.settings["tmin"] = tmin
+        if tmax is not None:
+            ml.settings["tmax"] = tmax
 
-    if solve:
-        ml.solve(report=False)
+        # calculate prediction interval
+        pi = ml.fit.prediction_interval(alpha=(1 - ci))
 
-    # calculate prediction interval
-    pi = ml.fit.prediction_interval(alpha=(1 - ci))
-    if pi.empty:
-        raise ValueError("Prediction interval wasn't calculated.")
-    corrections = rule_outside_bandwidth(series,
-                                         pi.iloc[:, 0],
-                                         pi.iloc[:, 1])
-    corrections.name = "sim (r^2={0:.3f})".format(ml.stats.evp() / 100.)
+        # prediction interval empty
+        if pi.empty:
+            corrections = mask_corrections_as_nan(
+                series, pd.Series(index=series.index, data=False))
+            corrections.name = "sim"
+        else:
+            corrections = rule_outside_bandwidth(series,
+                                                 pi.iloc[:, 0],
+                                                 pi.iloc[:, 1])
+            corrections.name = "sim (r^2={0:.3f})".format(ml.stats.rsq())
     return corrections
 
 
@@ -535,11 +552,11 @@ def rule_shift_to_manual_obs(series, hseries, method="linear",
     return adjusted_series
 
 
-def rule_combine_nan(*args):
+def rule_combine_nan_or(*args):
     """Combination rule, combine NaN values for any number of timeseries.
 
     Used for combining intermediate results in branching algorithm trees to
-    create one final result.
+    create one final result, i.e. (s1.isna() OR s2.isna())
 
     Returns
     -------
@@ -554,3 +571,82 @@ def rule_combine_nan(*args):
         else:
             result.loc[series.isna()] = np.nan
     return result
+
+
+def rule_combine_nan_and(*args):
+    """Combination rule, combine NaN values for any number of timeseries.
+
+    Used for combining intermediate results in branching algorithm trees to
+    create one final result, i.e. , i.e. (s1.isna() AND s2.isna())
+
+    Returns
+    -------
+    corrections : pd.Series
+        a series with same index as the input timeseries containing
+        corrections. Contains NaNs where any of the input series
+        values is NaN.
+    """
+    for i, series in enumerate(args):
+        if i == 0:
+            mask = series.isna()
+        else:
+            mask = mask & series.isna()
+    result = series.copy()
+    result.loc[mask] = np.nan
+    return result
+
+
+def rule_flat_signal(series, window, min_obs, std_threshold=7.5e-3,
+                     qbelow=None, qabove=None):
+    """Detection rule, flag values based on dead signal in rolling window.
+
+    Flag values when variation in signal within a window falls below a
+    certain threshold value. Optionally provide quantiles below or above
+    which to look for dead/flat signals.
+
+    Parameters
+    ----------
+    series : pd.Series
+        timeseries to analyse
+    window : int
+        number of days in window
+    min_obs : int
+        minimum number of observations in window to calculate
+        standard deviation
+    std_threshold : float, optional
+        standard deviation threshold value, by default 7.5e-3
+    qbelow : float, optional
+        quantile value between 0 and 1, signifying an upper
+        limit. Only search for flat signals below this limit.
+        By default None.
+    qabove : float, optional
+        quantile value between 0 and 1, signifying a lower
+        limit. Only search for flat signals above this limit.
+        By default None.
+
+    Returns
+    -------
+    corrections : pd.Series
+        a series with same index as the input timeseries containing
+        corrections. Contains NaNs where the signal is considered flat
+        or dead.
+    """
+    s = series.dropna()
+    stdfilt = s.dropna().rolling(
+        f'{int(window)}D', min_periods=min_obs).std()
+    stdmask = (stdfilt < std_threshold)
+
+    if qabove is None and qbelow is not None:
+        levelmask = s < s.quantile(qbelow)
+    elif qabove is not None and qbelow is None:
+        levelmask = s > s.quantile(qabove)
+    elif qabove is not None and qbelow is not None:
+        levelmask = ((s > s.quantile(qabove)) |
+                     (s < s.quantile(qbelow)))
+    else:
+        levelmask = (s == s)
+
+    mask = (stdmask & levelmask)
+    mask = mask.reindex(series.index, fill_value=False)
+
+    return mask_corrections_as_nan(series, mask)
