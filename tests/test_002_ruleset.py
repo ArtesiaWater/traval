@@ -83,7 +83,7 @@ def test_applyself_combine():
                        data=0.0,
                        name="test_series")
     d, _ = rset(series)
-    assert (d[len(d)-1] == 1.0).all()
+    assert (d[len(d) - 1] == 1.0).all()
     return d
 
 
@@ -93,6 +93,7 @@ def test_del_rules():
     assert len(rset.rules) == 1
     return
 
+
 def test_to_from_pickle():
     rset = test_add_rules()
     rset.to_pickle("test.pkl")
@@ -100,6 +101,7 @@ def test_to_from_pickle():
     import os
     os.remove("test.pkl")
     return
+
 
 def test_to_from_json():
     rset = test_add_rules()

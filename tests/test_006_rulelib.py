@@ -24,6 +24,7 @@ def test_rule_ufunc_threshold_series():
     assert c2.iloc[5:].isna().sum() == 5
     return c2
 
+
 def test_rule_diff_ufunc_threshold():
     # rule_diff_ufunc_threshold
     date_range = pd.date_range("2020-01-01", freq="D", periods=10)
@@ -32,6 +33,7 @@ def test_rule_diff_ufunc_threshold():
     c3 = rlib.rule_diff_ufunc_threshold(s1, (np.greater_equal,), 1.1)
     assert c3.iloc[4:5].isna().all()
     return c3
+
 
 def test_rule_other_ufunc_threshold():
     # rule_other_ufunc_threshold
@@ -42,6 +44,7 @@ def test_rule_other_ufunc_threshold():
     assert c4.iloc[:5].isna().sum() == 5
     return c4
 
+
 def test_rule_max_gradient():
     # rule_max_gradient
     date_range = pd.date_range("2020-01-01", freq="D", periods=10)
@@ -50,6 +53,7 @@ def test_rule_max_gradient():
     c5 = rlib.rule_max_gradient(s1, max_step=1.0, max_timestep="1D")
     assert c5.iloc[4:5].isna().all()
     return c5
+
 
 def test_rule_spike_detection():
     # rule_spike_detection
@@ -60,6 +64,7 @@ def test_rule_spike_detection():
     assert c6.iloc[4:5].isna().all()
     return c6
 
+
 def test_offset_detection():
     # rule_offset_detection
     date_range = pd.date_range("2020-01-01", freq="D", periods=10)
@@ -69,6 +74,7 @@ def test_offset_detection():
     assert c7.iloc[3:7].isna().sum() == 4
     return c7
 
+
 def test_rule_outside_n_sigma():
     # rule_outside_n_sigma
     date_range = pd.date_range("2020-01-01", freq="D", periods=10)
@@ -76,6 +82,7 @@ def test_rule_outside_n_sigma():
     c8 = rlib.rule_outside_n_sigma(s1, n=1.0)
     assert c8.iloc[[0, 1, 8, 9]].isna().sum() == 4
     return c8
+
 
 def test_rule_diff_outside_of_n_sigma():
     # rule_diff_outside_of_n_sigma
@@ -85,6 +92,7 @@ def test_rule_diff_outside_of_n_sigma():
     c9 = rlib.rule_diff_outside_of_n_sigma(s1, 1.0)
     assert c9.iloc[6:].isna().sum() == 4
     return c9
+
 
 def test_rule_outside_bandwidth():
     # rule_outside_bandwidth
@@ -96,6 +104,7 @@ def test_rule_outside_bandwidth():
     assert c10.iloc[[0, 1, 8, 9]].isna().sum() == 4
     return c10
 
+
 def test_rule_shift_to_manual_obs():
     # rule_shift_to_manual_obs
     date_range = pd.date_range("2020-01-01", freq="D", periods=10)
@@ -106,16 +115,30 @@ def test_rule_shift_to_manual_obs():
     assert a.iloc[0] == s1.iloc[0]
     return a
 
-def test_rule_combine_nan():
+
+def test_rule_combine_nan_or():
     # rule_combine_nan
     date_range = pd.date_range("2020-01-01", freq="D", periods=10)
     s1 = pd.Series(index=date_range, data=np.arange(10))
     s2 = s1.copy()
     s1.iloc[0] = np.nan
     s2.iloc[-1] = np.nan
-    c11 = rlib.rule_combine_nan(s1, s2)
+    c11 = rlib.rule_combine_nan_or(s1, s2)
     assert c11.iloc[[0, -1]].isna().sum() == 2
     return c11
+
+
+def test_rule_combine_nan_and():
+    # rule_combine_nan
+    date_range = pd.date_range("2020-01-01", freq="D", periods=10)
+    s1 = pd.Series(index=date_range, data=np.arange(10))
+    s2 = s1.copy()
+    s1.iloc[0:2] = np.nan
+    s2.iloc[1:3] = np.nan
+    c11 = rlib.rule_combine_nan_and(s1, s2)
+    assert c11.isna().sum() == 2
+    return c11
+
 
 def test_rule_funcdict_to_nan():
     # rule_funcdict_to_nan
@@ -129,6 +152,7 @@ def test_rule_funcdict_to_nan():
     assert c12.iloc[[0, 1, 2, -2, -1]].isna().sum() == 5
     return c12
 
+
 def test_rule_keep_comments():
     # rule_keep_comments
     date_range = pd.date_range("2020-01-01", freq="D", periods=10)
@@ -141,6 +165,7 @@ def test_rule_keep_comments():
     f = rlib.rule_keep_comments(raw, ["keep"], comment_series, val)
     assert (f.loc[comment_series == "keep"] == 0).all()
     assert (f.loc[comment_series != "keep"] == 1).all()
+
 
 @pytest.mark.skip
 def test_rule_pastas_outside_pi():

@@ -7,7 +7,7 @@ from test_002_ruleset import test_add_rules
 
 def test_init_detector():
     s = pd.Series(index=range(10),
-                  data=np.arange(-5, 23, 3, dtype=np.float),
+                  data=np.arange(-5, 23, 3, dtype=float),
                   name="test_series")
     d = traval.Detector(s)
     return d
@@ -20,7 +20,7 @@ def test_repr():
 
 def test_add_truth():
     t = pd.Series(index=range(10),
-                  data=np.arange(-5, 23, 3, dtype=np.float),
+                  data=np.arange(-5, 23, 3, dtype=float),
                   name="test_series")
     t[t < 0] = np.nan
     t[t > 10] = np.nan
@@ -34,6 +34,7 @@ def test_apply_ruleset():
     d = test_add_truth()
     d.apply_ruleset(rset)
     return d
+
 
 def test_reset():
     d = test_apply_ruleset()
