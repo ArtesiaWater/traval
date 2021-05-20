@@ -185,6 +185,33 @@ def interpolate_series_to_new_index(series, new_index):
     return si
 
 
+def unique_nans_in_series(series, *args):
+    """Get mask where NaNs in series are unique compared to other series.
+
+    Parameters
+    ----------
+    series : pd.Series
+        identify unique NaNs in series
+    *args 
+        any number of pandas.Series
+
+    Returns
+    -------
+    mask : pd.Series
+        mask with value True where NaN is unique to series
+    """
+
+    mask = series.isna()
+
+    for s in args:
+        if not isinstance(s, pd.Series):
+            raise ValueError("Only supports pandas Series")
+
+        mask = mask & ~s.isna()
+
+    return mask
+
+
 def create_synthetic_raw_timeseries(raw_series, truth_series, comments):
     """Create synthetic raw timeseries.
 
