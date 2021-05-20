@@ -1,6 +1,6 @@
-import traval
-import pandas as pd
 import numpy as np
+import pandas as pd
+import traval
 
 from test_002_ruleset import test_add_rules
 
