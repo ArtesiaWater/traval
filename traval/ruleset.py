@@ -324,6 +324,39 @@ class RuleSet:
                                 f"of ints. Got '{irule['apply_to']}'")
         return d, c
 
+    def get_step_name(self, istep):
+        if istep > 0:
+            n = list(self.rules.keys())[istep - 1]
+        elif istep == 0:
+            n = "base series"
+        else:
+            # negative step counts from end
+            n = list(self.rules.keys())[istep]
+        return n
+
+    def get_rule(self, istep=None, stepname=None):
+        if istep is not None:
+            istepname = self.get_step_name(istep)
+            irule = self.rules[istepname]
+        elif stepname is not None:
+            irule = self.rules[stepname]
+        else:
+            raise ValueError("Provide one of 'istep' or 'stepname'!")
+        return irule
+
+    def get_func(self, istep=None, stepname=None):
+        irule = self.get_rule(istep=istep, stepname=stepname)
+        return irule["func"]
+
+    def get_applyto(self, istep=None, stepname=None):
+        irule = self.get_rule(istep=istep, stepname=stepname)
+        return irule["applyto"]
+
+    def get_kwargs(self, istep=None, stepname=None, kwarg_name=None):
+        irule = self.get_rule(istep=istep, stepname=stepname)
+        arg_dict = self._parse_kwargs(irule["kwargs"], name=kwarg_name)
+        return arg_dict
+
     def to_pickle(self, fname, verbose=True):
         """Write RuleSet to disk as pickle.
 
