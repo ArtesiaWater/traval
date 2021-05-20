@@ -1,18 +1,20 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from copy import deepcopy
 
 from .ts_comparison import SeriesComparison, SeriesComparisonRelative
+from .ts_utils import unique_nans_in_series
 
 
 class Detector:
     """Detector object for applying error detection algorithms to timeseries.
 
-    The Detector is used to apply error detection algorithms to a timeseries 
+    The Detector is used to apply error detection algorithms to a timeseries
     and optionally contains a 'truth' series, to which the error detection
-    result can be compared. An example of a 'truth' series is a manually 
+    result can be compared. An example of a 'truth' series is a manually
     validated timeseries. Custom error detection algorithms can be defined
-    using the RuleSet object. 
+    using the RuleSet object.
 
 
     Parameters
@@ -31,7 +33,7 @@ class Detector:
 
     >>> d = Detector(series)
     >>> d.apply_ruleset(rset)
-    >>> d.plot()
+    >>> d.plot_overview()
 
 
     See also
@@ -134,7 +136,7 @@ class Detector:
         # if compare is not False do comparison
         if compare:
             self.comparisons = {}
-            base = d[0]
+            base = d[0].copy()
 
             # if compare is not list, get all step numbers
             if not isinstance(compare, list):
@@ -170,15 +172,17 @@ class Detector:
         self._validate_input_series(truth)
         self.truth = truth
 
-    def confusion_matrix(self, series=None, truth=None):
-        """Calculate confusion matrix.
+    def confusion_matrix(self, steps=None, truth=None):
+        """Calculate confusion matrix stats for detection rules.
+
+        Note: the calculated statistics per rule contain overlapping counts, 
+        i.e. multiple rules can mark the same observatin as suspect.
 
         Parameters
         ----------
-        series : pd.Series or pd.DataFrame, optional
-            resulting series, by default None which uses the final
-            result after applying ruleset. Argument is included so the
-            confusion matrix can also be calculated for intermediate results.
+        steps : int, list of int or None, optional
+            steps for which to calculate confusion matrix statistics, by 
+            default None which uses all steps.
         truth : pd.Series or pd.DataFrame, optional
             series representing the "truth", i.e. a benchmark to which the
             resulting series is compared. By default None, which uses the
@@ -187,11 +191,220 @@ class Detector:
 
         Returns
         -------
-        confusion_matrix : pd.DataFrame
-            confusion matrix containing counts of true positives,
-            false positives, true negatives and false negatives.
+        df : pd.DataFrame
+            dataframe containing confusion matrix data, i.e. counts of true 
+            positives, false positives, true negatives and false negatives.
         """
-        pass
+        # get list of step integers
+        if isinstance(steps, int):
+            steps = [steps]
+        if not isinstance(steps, list):
+            steps = self.results.keys()
+
+        # use truth if provided, else use stored truth
+        if truth is None:
+            truth = self.truth
+
+        # get rule names
+        rulenames = [self.ruleset.get_step_name(i) for i in steps]
+
+        df = pd.DataFrame(index=steps,
+                          columns=["rule", "TP", "FP", "FN", "TN"])
+        df.loc[:, "rule"] = rulenames
+        base = self.results[0]
+        base.name = "base series"
+
+        # loop over steps
+        for k in steps:
+            # if k is negative, convert to step number from end
+            if k < 0:
+                k = len(self.results.keys()) + k
+            # only do comparison for steps, not base series
+            if k > 0:
+                s = self.results[k]
+                s.name = rulenames[k]
+                cp = SeriesComparisonRelative(s, truth, base)
+
+                # store stats
+                df.loc[k, ["TP", "FP", "FN", "TN"]] = (cp.bc.tp,
+                                                       cp.bc.fp,
+                                                       cp.bc.fn,
+                                                       cp.bc.tn)
+        return df
+
+    def uniqueness(self, truth=None):
+        """Calculate unique contribution per rule to stats.
+
+        Note: the calculated statistics per rule contain an undercount, 
+        i.e. when multiple rules mark the same observatin as suspect it is 
+        not contained in this result.
+
+        Parameters
+        ----------
+        steps : int, list of int or None, optional
+            steps for which to calculate confusion matrix statistics, by 
+            default None which uses all steps.
+        truth : pd.Series or pd.DataFrame, optional
+            series representing the "truth", i.e. a benchmark to which the
+            resulting series is compared. By default None, which uses the
+            stored truth series. Argument is included so a different truth
+            can be passed.
+
+        Returns
+        -------
+        df : pd.DataFrame
+            dataframe containing confusion matrix data, i.e. unique counts 
+            of true positives, false positives, true negatives and 
+            false negatives.
+        """
+        steps = list(self.results.keys())[1:]
+
+        # use truth if provided, else use stored truth
+        if truth is None:
+            truth = self.truth
+
+        base = self.results[0]
+        base.name = "base series"
+
+        # last step, skip in comparison as this presumably contains all NaNs
+        last_step = max(steps)
+        steps.remove(last_step)
+
+        # get rule names
+        rulenames = [self.ruleset.get_step_name(i) for i in steps]
+
+        df = pd.DataFrame(index=steps,
+                          columns=["rule", "TP", "FP", "FN", "TN"])
+        df.loc[:, "rule"] = rulenames
+
+        for j, k in enumerate(steps):
+            series_list = deepcopy(self.results)
+            s = series_list.pop(k)
+            series_list.pop(last_step)
+            other_series = list(series_list.values())
+            mask = unique_nans_in_series(s, *other_series)
+            s.loc[~mask & s.isna()] = -9999.  # some random non-NaN number
+            s.name = rulenames[j]
+            cp = SeriesComparisonRelative(s, truth, base)
+
+            # store stats
+            df.loc[k, ["TP", "FP", "FN", "TN"]] = (cp.bc.tp,
+                                                   cp.bc.fp,
+                                                   cp.bc.fn,
+                                                   cp.bc.tn)
+        return df
+
+    def stats_per_comment(self, step=None, truth=None):
+
+        if step is None:
+            step = list(self.results.keys())[-1]
+        elif step < 0:
+            step = len(self.results.keys()) + step
+
+        if truth is None:
+            truth = self.truth
+
+        # get rule names
+        rulename = self.ruleset.get_step_name(step)
+
+        base = self.results[0]
+        base.name = "base series"
+
+        s = self.results[step]
+        s.name = rulename
+
+        cp = SeriesComparisonRelative(s, truth, base)
+        stats = cp.compare_to_base_by_comment()
+
+        cols = {
+            "TP": 'flagged_in_both',
+            "FP": 'flagged_in_s1',
+            "FN": 'flagged_in_s2',
+            "TN": 'kept_in_both'
+        }
+        df = stats.loc[cols.values(), :].transpose()
+        df.index.name = rulename
+        df.rename(columns=cols, inplace=True)
+        return df
+
+    def get_series(self, step, category=None):
+        base = self.results[0]
+        base.name = "base series"
+
+        if self.truth is not None:
+            if self.truth.columns.size > 1:
+                truth = self.truth
+            else:
+                truth = self.truth
+
+        df = pd.concat([base, self.results[step], truth], axis=1)
+
+        if category is not None:
+            idx = self.get_indices(category=category, step=step)
+            df = df.loc[idx]
+
+        return df
+
+    def get_indices(self, category, step, truth=None):
+
+        s = self.results[step]
+        base = self.results[0]
+        base.name = "base series"
+
+        if truth is None:
+            truth = self.truth
+
+        cp = SeriesComparisonRelative(s, truth, base)
+
+        if category.lower() in ["tp", "true_positives"]:
+            idx = cp.idx_r_flagged_in_both
+        elif category.lower() in ["fp", "false_positives"]:
+            idx = cp.idx_r_flagged_in_s1
+        elif category.lower() in ["fn", "false_negatives"]:
+            idx = cp.idx_r_flagged_in_s2
+        elif category.lower() in ["tn", "true_negatives"]:
+            idx = cp.idx_r_kept_in_both
+        else:
+            raise ValueError(f"Category '{category}' not recognized, must "
+                             "be one of ('tp', 'fp', 'fn', 'tn')")
+
+        return idx
+
+    def get_comment_series(self, steps=None):
+
+        # get list of step integers
+        if isinstance(steps, int):
+            if steps < 0:
+                steps = [len(self.results.keys()) + steps]
+            else:
+                steps = [steps]
+        if not isinstance(steps, list):
+            steps = list(self.results.keys())[1:]
+
+        # get rule names
+        rulenames = [self.ruleset.get_step_name(i) for i in steps]
+
+        # get corrections
+        corr = self.get_corrections_dataframe()
+
+        if corr.empty:
+            corr = pd.DataFrame(index=self.series.index,
+                                columns=rulenames, data=0.0)
+        else:
+            corr = corr.loc[:, rulenames]
+
+        comments = []
+        for col in corr.columns:
+            s = corr[col].copy()
+            s = s.replace(0.0, "").replace(np.nan, col)
+            comments.append(s)
+
+        comments = pd.concat(comments, axis=1).apply(
+            lambda s: ",".join(s[s != ""]), axis=1)
+        comments = comments.replace(np.nan, "")
+        comments.name = "comment"
+
+        return comments
 
     def get_results_dataframe(self):
         """Get results as DataFrame.
