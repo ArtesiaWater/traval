@@ -385,7 +385,8 @@ def rule_outside_bandwidth(series, lowerbound, upperbound):
     return mask_corrections_as_nan(series, mask)
 
 
-def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None):
+def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None,
+                           verbose=False):
     """Detection rule, flag values based on pastas model prediction interval.
 
     Flag suspect outside prediction interval calculated by pastas timeseries
@@ -412,11 +413,15 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None):
     """
     # no model
     if ml is None:
+        if verbose:
+            print("Warning: No Pastas model found!")
         corrections = mask_corrections_as_nan(
             series, pd.Series(index=series.index, data=False))
         corrections.name = "sim"
     # no fit
     elif ml.fit is None:
+        if verbose:
+            print("Warning: Pastas model fit attribute is None!")
         corrections = mask_corrections_as_nan(
             series, pd.Series(index=series.index, data=False))
         corrections.name = "sim"
@@ -432,6 +437,9 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None):
 
         # prediction interval empty
         if pi.empty:
+            if verbose:
+                print("Warning: calculated prediction interval with "
+                      "Pastas model is empty!")
             corrections = mask_corrections_as_nan(
                 series, pd.Series(index=series.index, data=False))
             corrections.name = "sim"
