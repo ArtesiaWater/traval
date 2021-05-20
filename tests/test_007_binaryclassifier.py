@@ -1,3 +1,4 @@
+from pandas import Series
 from traval import BinaryClassifier
 
 
@@ -6,37 +7,30 @@ def test_bc():
     return bc
 
 
-def test_mcc():
+def test_all_stats():
     bc = test_bc()
-    assert bc.mcc() == 0.8
-    return
-
-
-def test_tpr():
-    bc = test_bc()
-    tpr = bc.true_positive_rate
-    assert tpr == 0.9
-    return
-
-
-def test_fpr():
-    bc = test_bc()
-    fpr = bc.false_positive_rate
-    assert fpr == 0.1
-    return
-
-
-def test_tnr():
-    bc = test_bc()
-    tnr = bc.true_negative_rate
-    assert tnr == 0.9
-    return
-
-
-def test_fnr():
-    bc = test_bc()
-    fnr = bc.false_negative_rate
-    assert fnr == 0.1
+    stats = bc.get_all_statistics()
+    answer = {
+        'tp': 9.0,
+        'fp': 1.0,
+        'fn': 1.0,
+        'tn': 9.0,
+        'sensitivity': 0.9,
+        'tpr': 0.9,
+        'fnr': 0.1,
+        'specificity': 0.9,
+        'tnr': 0.9,
+        'fpr': 0.1,
+        'ppv': 0.9,
+        'npv': 0.9,
+        'fdr': 0.1,
+        'for': 0.1,
+        'acc': 0.9,
+        'prev': 0.5,
+        'informedness': 0.8,
+        'mcc': 0.8
+    }
+    assert (stats == Series(answer)).all()
     return
 
 
