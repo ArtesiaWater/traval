@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy.stats import norm
 
 
 class ComparisonPlots:
@@ -189,14 +191,15 @@ class ComparisonPlots:
 
         # mark flagged in both
         if self.cp.idx_r_flagged_in_both.size > 0:
-            s_base = pd.Series(index=self.cp.basen.index, data=np.nan, dtype=float)
+            s_base = pd.Series(index=self.cp.basen.index,
+                               data=np.nan, dtype=float)
             s_base.loc[self.cp.idx_r_flagged_in_both] = \
                 self.cp.basen.loc[self.cp.idx_r_flagged_in_both]
             p6, = ax.plot(s_base.index,
-                        s_base, lw=0.5,
-                        **self.color_dict["flagged_in_both"],
-                        ls="none", marker="x", ms=5,
-                        label="flagged in both")
+                          s_base, lw=0.5,
+                          **self.color_dict["flagged_in_both"],
+                          ls="none", marker="x", ms=5,
+                          label="flagged in both")
             plot_handles.append(p6)
             plot_labels.append(p6.get_label())
 
@@ -223,8 +226,60 @@ class ComparisonPlots:
 
         return ax
 
+    def plot_validation_result(self, ax=None):
+        # Some plot settings
+        ms_valid = 6  # markersize validation result
+        mew = 1.25  # markeredgewidth validation result
 
-def roc_plot(tpr, fpr, labels, ax=None, plot_diagonal=True, **kwargs):
+        if ax is None:
+            fig, ax = plt.subplots(1, 1, figsize=(12, 5))
+        else:
+            fig = ax.figure
+
+        plot_handles = []
+
+        # Add an original series i.e. raw data to the plot
+        p0, = ax.plot(self.cp.basen.index, self.cp.basen, lw=0.5, c="k",
+                      marker=".", ms=3, label="base series", ls="solid")
+        plot_handles.append(p0)
+
+        # set marker colors
+        c = pd.Series(index=self.cp.basen.index, data='')
+        c.loc[self.cp.idx_r_flagged_in_both] = "Green"
+        c.loc[self.cp.idx_r_flagged_in_s1] = "DarkOrange"
+        c.loc[self.cp.idx_r_flagged_in_s2] = "Red"
+
+        mask = c != ""
+
+        s = self.cp.basen.loc[mask]
+        c = c.loc[mask]
+
+        sc = ax.scatter(s.index, s.values, c=c.values, s=ms_valid**2,
+                        linewidths=mew, marker="o", edgecolor=c.values,
+                        zorder=10)
+        sc.set_facecolor("none")
+
+        dummy1, = ax.plot([], [], c="Green", marker="o", mfc="none", mew=mew,
+                          ls="none", ms=ms_valid, label="Correctly flagged (TP)")
+        dummy2, = ax.plot([], [], c="DarkOrange", marker="o", mfc="none", mew=mew,
+                          ls="none", ms=ms_valid, label="Incorrectly flagged (FP)")
+        dummy3, = ax.plot([], [], c="Red", marker="o", mfc="none", mew=mew,
+                          ls="none", ms=ms_valid, label="Wrongly kept (FN)")
+
+        plot_handles += [dummy1, dummy2, dummy3]
+
+        # Add legend and other plot stuff
+        plot_labels = [i.get_label() for i in plot_handles]
+        ax.legend(plot_handles, plot_labels, loc="best", markerscale=1.5,
+                  ncol=int(np.ceil(len(plot_handles) / 2.)))
+        ax.grid(b=True)
+        fig.tight_layout()
+
+        return ax
+
+
+def roc_plot(tpr, fpr, labels, colors=None, ax=None,
+             plot_diagonal=True, colorbar_label=None, **kwargs):
     """Receiver operator characteristic plot.
 
     Plots the false positive rate (x-axis) versus the
@@ -251,7 +306,7 @@ def roc_plot(tpr, fpr, labels, ax=None, plot_diagonal=True, **kwargs):
         whether to plot the diagonal (useful for combining multiple
         ROC plots)
     **kwargs
-        passed to ax.plot
+        passed to ax.scatter
 
     Returns
     -------
@@ -276,7 +331,8 @@ def roc_plot(tpr, fpr, labels, ax=None, plot_diagonal=True, **kwargs):
                 label="random guess")
 
     for itpr, ifpr, ilbl in zip(tpr, fpr, labels):
-        ax.plot(ifpr, itpr, marker="o", label=ilbl, ls="none", **kwargs)
+        sc = ax.scatter(ifpr, itpr, s=6**2, c=colors,
+                        marker="o", label=ilbl, **kwargs)
 
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
@@ -286,6 +342,80 @@ def roc_plot(tpr, fpr, labels, ax=None, plot_diagonal=True, **kwargs):
     ax.set_xlabel("False Positive Rate (1-specificity)")
     ax.set_title("receiver operator characteristic plot")
 
+    if colors is not None:
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", "5%", pad="3%")
+        cbar = fig.colorbar(sc, cax=cax)
+        if colorbar_label is not None:
+            cbar.set_label(colorbar_label)
+
     fig.tight_layout()
+    return ax
+
+
+def det_plot(fpr, fnr, labels, ax=None, **kwargs):
+    """Detection Error Tradeoff plot.
+
+    Adapted from scikitlearn `DetCurveDisplay`.
+
+    Parameters
+    ----------
+    fpr : list or value or array
+        false positive rate. If passed as a list loops through each
+        entry and plots it. Otherwise just plots the array or value.
+    fnr : list or value or array
+        false negative rate. If passed as a list loops through each
+        entry and plots it. Otherwise just plots the array or value.
+    labels : list or str
+        label for each fpr/fnr entry.
+    ax : matplotlib.pyplot.Axes, optional
+        axes handle to plot on, by default None, which 
+        creates a new figure
+
+    Returns
+    -------
+    ax : matplotlib.pyplot.Axes
+        axes handle
+    """
+
+    if not isinstance(fpr, list):
+        fpr = [fpr]
+    if not isinstance(fnr, list):
+        fnr = [fnr]
+    if not isinstance(labels, list):
+        labels = [labels]
+
+    if ax is None:
+        fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+    else:
+        fig = ax.figure
+
+    ax.set_aspect("equal")
+
+    for ifpr, ifnr, ilbl in zip(fpr, fnr, labels):
+        ax.plot(norm.ppf(ifpr), norm.ppf(ifnr), marker="o",
+                ls="none", label=ilbl, **kwargs)
+
+    xlabel = "False Positive Rate"
+    ylabel = "False Negative Rate"
+    ax.set(xlabel=xlabel, ylabel=ylabel)
+
+    ticks = [0.001, 0.01, 0.05, 0.20, 0.5, 0.80, 0.95, 0.99, 0.999]
+    tick_locations = norm.ppf(ticks)
+    tick_labels = [
+        '{:.0%}'.format(s) if (100 * s).is_integer() else '{:.1%}'.format(s)
+        for s in ticks
+    ]
+    ax.set_xticks(tick_locations)
+    ax.set_xticklabels(tick_labels)
+    ax.set_xlim(-3, 3)
+    ax.set_yticks(tick_locations)
+    ax.set_yticklabels(tick_labels)
+    ax.set_ylim(-3, 3)
+    ax.grid(b=True)
+
+    ax.set_title("detection error tradeoff plot")
+
+    # fig.tight_layout()
 
     return ax
