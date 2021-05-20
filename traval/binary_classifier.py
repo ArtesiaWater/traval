@@ -5,6 +5,27 @@ import pandas as pd
 class BinaryClassifier:
     """Class for calculating binary classification statistics."""
 
+    stats_abbreviations = {
+        "tp": "true positives",
+        "fp": "false positives",
+        "fn": "false negatives",
+        "tn": "true negatives",
+        "sensitivity": "sensitivity",
+        "tpr": "true positive rate",
+        "fnr": "false negative rate",
+        "specificity": "specificity",
+        "tnr": "true negative rate",
+        "fpr": "false positive rate",
+        "ppv": "positive predictive value",
+        "npv": "negative predictive value",
+        "fdr": "false discovery rate",
+        "for": "false omission rate",
+        "acc": "accuracy",
+        "prev": "prevalence",
+        "informedness": "informedness",
+        "mcc": "matthews correlation coefficient",
+    }
+
     def __init__(self, tp, fp, tn, fn):
         """Initialize class for calculating binary classification statistics.
 
@@ -20,10 +41,10 @@ class BinaryClassifier:
             number of False Negatives (FN)
         """
         self.n_obs = tp + fp + tn + fn
-        self.n_true_positives = self.tp = tp
-        self.n_false_positives = self.fp = fp
-        self.n_true_negatives = self.tn = tn
-        self.n_false_negatives = self.fn = fn
+        self.true_positives = self.tp = tp
+        self.false_positives = self.fp = fp
+        self.true_negatives = self.tn = tn
+        self.false_negatives = self.fn = fn
 
     @classmethod
     def from_series_comparison_relative(cls, comparison):
@@ -39,10 +60,10 @@ class BinaryClassifier:
         BinaryClassifier
             object for calculating binary classification statistics
         """
-        n_true_positives = comparison.idx_r_flagged_in_both.size
-        n_false_positives = comparison.idx_r_flagged_in_s1.size
-        n_true_negatives = comparison.idx_r_kept_in_both.size
-        n_false_negatives = comparison.idx_r_flagged_in_s2.size
+        n_true_positives = comparison.idx_r_flagged_in_both.size  # hit
+        n_false_positives = comparison.idx_r_flagged_in_s1.size  # false alarm
+        n_true_negatives = comparison.idx_r_kept_in_both.size  # correct rejections
+        n_false_negatives = comparison.idx_r_flagged_in_s2.size  # miss
         return cls(n_true_positives, n_false_positives,
                    n_true_negatives, n_false_negatives)
 
@@ -82,10 +103,10 @@ class BinaryClassifier:
 
     def __add__(self, other):
         if isinstance(other, self.__class__):
-            tp = self.n_true_positives + other.n_true_positives
-            fp = self.n_false_positives + other.n_false_positives
-            tn = self.n_true_negatives + other.n_true_negatives
-            fn = self.n_false_negatives + other.n_false_negatives
+            tp = self.true_positives + other.true_positives
+            fp = self.false_positives + other.false_positives
+            tn = self.true_negatives + other.true_negatives
+            fn = self.false_negatives + other.false_negatives
         else:
             raise TypeError("other must be BinaryClassifier object!")
         return BinaryClassifier(tp, fp, tn, fn)
@@ -125,15 +146,15 @@ class BinaryClassifier:
         # create array with data
         data = np.zeros((2, 2), dtype=int)
         # true positives = errors correctly identified
-        data[0, 0] = self.n_true_positives
+        data[0, 0] = self.true_positives
         # true negatives = correct observations correctly left alone
-        data[1, 1] = self.n_true_negatives
+        data[1, 1] = self.true_negatives
         # false negatives = seen as correct by algorithm but
         # are errors according to 'truth'
-        data[0, 1] = self.n_false_negatives
+        data[0, 1] = self.false_negatives
         # false positives = identified as errors by algorithm but
         # are correct according to 'truth'
-        data[1, 0] = self.n_false_positives
+        data[1, 0] = self.false_positives
 
         if as_array:
             return data
@@ -147,6 +168,7 @@ class BinaryClassifier:
                 index=index, columns=columns, data=data, dtype=int)
             return cmat
 
+    @property
     def matthews_correlation_coefficient(self):
         """Matthews correlation coefficient (MCC).
 
@@ -173,6 +195,7 @@ class BinaryClassifier:
                                  (self.tn + self.fp) * (self.tn + self.fn))))
         return phi
 
+    @property
     def mcc(self):
         """Convenience method for calculating Matthews correlation coefficient.
 
@@ -185,7 +208,7 @@ class BinaryClassifier:
         --------
         matthews_correlation_coefficient : more information about the statistic
         """
-        return self.matthews_correlation_coefficient()
+        return self.matthews_correlation_coefficient
 
     @property
     def sensitivity(self):
@@ -200,8 +223,8 @@ class BinaryClassifier:
         - TP : True Positives
         - FN : False Negatives
         """
-        tp = self.n_true_positives
-        fn = self.n_false_negatives
+        tp = self.true_positives
+        fn = self.false_negatives
         if tp + fn > 0:
             return tp / (tp + fn)
         else:
@@ -220,8 +243,8 @@ class BinaryClassifier:
         - TN : True Negatives
         - FP : False Positives
         """
-        tn = self.n_true_negatives
-        fp = self.n_false_positives
+        tn = self.true_negatives
+        fp = self.false_positives
         if tn + fp > 0:
             return tn / (tn + fp)
         else:
@@ -254,8 +277,8 @@ class BinaryClassifier:
         - TN : True Negatives
 
         """
-        fp = self.n_false_positives
-        tn = self.n_true_negatives
+        fp = self.false_positives
+        tn = self.true_negatives
         if fp + tn > 0:
             return fp / (fp + tn)
         else:
@@ -272,9 +295,139 @@ class BinaryClassifier:
         - TP : True Positives
 
         """
-        fn = self.n_false_negatives
-        tp = self.n_true_positives
+        fn = self.false_negatives
+        tp = self.true_positives
         if fn + tp > 0:
             return fn / (fn + tp)
         else:
             return np.nan
+
+    @property
+    def informedness(self):
+        """Informedness statistic (a.k.a. Youden's J statistic).
+
+        Measure of diagnostic performance, and has a zero value when a 
+        diagnostic test gives the same proportion of positive results for 
+        groups with and without a condition, i.e the test is useless. 
+        A value of 1 indicates that there are no false positives or 
+        false negatives, i.e. the test is perfect.
+
+        Calculated as:
+
+            informedness = specificity + sensitivity - 1.
+        """
+        return self.specificity + self.sensitivity - 1.
+
+    @property
+    def accuracy(self):
+        """Accuracy of binary classification.
+
+            ACC = (TP + TN) / (TP + FP + FN + TN)
+
+        where
+        - TP : True Positives
+        - TN : True Negatives
+        - FP : False Positives
+        - FN : False Negatives
+
+        """
+        acc = (self.tp + self.tn) / (self.tp + self.fp + self.fn + self.tn)
+        return acc
+
+    @property
+    def prevalence(self):
+        """Prevalance of true errors in total population.
+
+            Prevalence = (TP + FN) / (TP + FP + FN + TN)
+
+        where
+        - TP : True Positives
+        - TN : True Negatives
+        - FP : False Positives
+        - FN : False Negatives
+
+        """
+        prev = (self.tp + self.fn) / (self.tp + self.fp + self.fn + self.tn)
+        return prev
+
+    @property
+    def positive_predictive_value(self):
+        """Positive predictive value (a.k.a. precision).
+
+            PPV = TP / (TP + FP)
+
+        where
+        - TP : True Positives
+        - FP : False Positives
+
+        """
+        ppv = self.tp / (self.tp + self.fp)
+        return ppv
+
+    @property
+    def negative_predictive_value(self):
+        """Negative predictive value.
+
+            NPV = TN / (TN + FN)
+
+        where
+        - TN : True Negatives
+        - FN : False Negatives
+
+        """
+        npv = self.tn / (self.tn + self.fn)
+        return npv
+
+    @property
+    def false_discovery_rate(self):
+        """False discovery rate.
+
+            FDR = 1 - PPV = FP / (FP + TP)
+
+        where
+        - TP : True Positives
+        - FP : False Positives
+
+        """
+        fdr = self.fp / (self.fp + self.tp)
+        return fdr
+
+    @property
+    def false_omission_rate(self):
+        """False omission rate.
+
+            FOR = 1 - NPV = FN / (TN + FN)
+
+        where
+        - TN : True Negatives
+        - FN : False Negatives
+
+        """
+        for_ = self.fn / (self.fn + self.tn)
+        return for_
+
+    def get_all_statistics(self, use_abbreviations=True):
+        """Get all statistics in pandas.Series.
+
+        Parameters
+        ----------
+        use_abbreviations : bool, optional
+            whether to use abbreviations or full names for 
+            index, by default True
+
+        Returns
+        -------
+        s : pandas.Series
+            series containing all statistics
+        """
+
+        sdict = {}
+        for k, v in self.stats_abbreviations.items():
+            if use_abbreviations:
+                key = k
+            else:
+                key = v
+            sdict[key] = getattr(self, "_".join(v.split()))
+
+        s = pd.Series(sdict)
+        return s
