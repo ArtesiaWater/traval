@@ -169,6 +169,12 @@ class SeriesComparison:
         idxcomp_nan = DateTimeIndexComparison(self.s1n.loc[nanmask1].index,
                                               self.s2n.loc[nanmask2].index)
 
+        # weird categories NaNs in s1 but missing in s2
+        self.idx_in_s1_nan = idxcomp_nan.idx_in_idx1()
+        # weird categories NaNs in s2 but missing in s1
+        self.idx_in_s2_nan = idxcomp_nan.idx_in_idx2()
+
+        # in_both_nan
         self.idx_in_both_nan = idxcomp_nan.idx_in_both()
 
     def _compare_indices_without_nans(self):
@@ -178,6 +184,14 @@ class SeriesComparison:
         self.idx_in_both = idxcomp.idx_in_both()
         self.idx_in_s1 = idxcomp.idx_in_idx1()
         self.idx_in_s2 = idxcomp.idx_in_idx2()
+
+        # add where s1 is NaN and s2 is missing to in_both_nan
+        nan_missing = self.idx_in_s1_nan.difference(self.idx_in_s2)
+        # add where s1 is NaN and s2 is missing to in_both_nan
+        missing_nan = self.idx_in_s2_nan.difference(self.idx_in_s1)
+
+        self.idx_in_both_nan = self.idx_in_both_nan.union(
+            nan_missing).union(missing_nan)
 
     def _compare_series_values(self):
         """Internal method for identifying different identical values.
@@ -245,7 +259,7 @@ class SeriesComparison:
                                dtype=int)
         for cat in categories:
             cat_idx = getattr(self, "idx_" + cat)
-            vc = self.c2n.loc[cat_idx].value_counts()
+            vc = self.c2n.reindex(cat_idx).dropna().value_counts()
             summary.loc[cat, vc.index] = vc
 
         return summary.sort_index(axis=1)
@@ -412,8 +426,9 @@ class SeriesComparisonRelative(SeriesComparison):
         self.idx_r_kept_in_both = self.base.index.intersection(s1s2_intersect)
 
         # the generally more unexpected differences
+        # contains where all NaN and where s1 and s2 missing
         self.idx_r_in_all_nan = self.basen.loc[nanmask].index.difference(
-            s1s2_union)  # contains where all NaN and where s1 and s2 missing
+            s1s2_union)
         # self.idx_r_in_all_nan = self.basen.loc[nanmask].index.intersection(
         #     self.idx_in_both_nan)  # only where all are NaN
         # counts for both NaNs and missing in base timeseries
@@ -488,7 +503,7 @@ class SeriesComparisonRelative(SeriesComparison):
                                dtype=int)
         for cat in categories:
             cat_idx = getattr(self, "idx_r_" + cat)
-            vc = self.c2n.loc[cat_idx].value_counts()
+            vc = self.c2n.reindex(cat_idx).dropna().value_counts()
             summary.loc[cat, vc.index] = vc
 
         return summary.sort_index(axis=1)
