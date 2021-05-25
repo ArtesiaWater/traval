@@ -270,8 +270,8 @@ class ComparisonPlots:
 
         # Add legend and other plot stuff
         plot_labels = [i.get_label() for i in plot_handles]
-        ax.legend(plot_handles, plot_labels, loc="best", markerscale=1.5,
-                  ncol=int(np.ceil(len(plot_handles) / 2.)))
+        ax.legend(plot_handles, plot_labels, loc=(0, 1), markerscale=1.25,
+                  ncol=len(plot_handles), frameon=False)
         ax.grid(b=True)
         fig.tight_layout()
 
