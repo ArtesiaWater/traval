@@ -175,13 +175,13 @@ class Detector:
     def confusion_matrix(self, steps=None, truth=None):
         """Calculate confusion matrix stats for detection rules.
 
-        Note: the calculated statistics per rule contain overlapping counts, 
+        Note: the calculated statistics per rule contain overlapping counts,
         i.e. multiple rules can mark the same observatin as suspect.
 
         Parameters
         ----------
         steps : int, list of int or None, optional
-            steps for which to calculate confusion matrix statistics, by 
+            steps for which to calculate confusion matrix statistics, by
             default None which uses all steps.
         truth : pd.Series or pd.DataFrame, optional
             series representing the "truth", i.e. a benchmark to which the
@@ -192,7 +192,7 @@ class Detector:
         Returns
         -------
         df : pd.DataFrame
-            dataframe containing confusion matrix data, i.e. counts of true 
+            dataframe containing confusion matrix data, i.e. counts of true
             positives, false positives, true negatives and false negatives.
         """
         # get list of step integers
@@ -235,14 +235,14 @@ class Detector:
     def uniqueness(self, truth=None):
         """Calculate unique contribution per rule to stats.
 
-        Note: the calculated statistics per rule contain an undercount, 
-        i.e. when multiple rules mark the same observatin as suspect it is 
+        Note: the calculated statistics per rule contain an undercount,
+        i.e. when multiple rules mark the same observatin as suspect it is
         not contained in this result.
 
         Parameters
         ----------
         steps : int, list of int or None, optional
-            steps for which to calculate confusion matrix statistics, by 
+            steps for which to calculate confusion matrix statistics, by
             default None which uses all steps.
         truth : pd.Series or pd.DataFrame, optional
             series representing the "truth", i.e. a benchmark to which the
@@ -253,8 +253,8 @@ class Detector:
         Returns
         -------
         df : pd.DataFrame
-            dataframe containing confusion matrix data, i.e. unique counts 
-            of true positives, false positives, true negatives and 
+            dataframe containing confusion matrix data, i.e. unique counts
+            of true positives, false positives, true negatives and
             false negatives.
         """
         steps = list(self.results.keys())[1:]

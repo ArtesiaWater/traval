@@ -192,7 +192,7 @@ def unique_nans_in_series(series, *args):
     ----------
     series : pd.Series
         identify unique NaNs in series
-    *args 
+    *args
         any number of pandas.Series
 
     Returns

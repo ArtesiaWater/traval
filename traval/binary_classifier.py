@@ -306,10 +306,10 @@ class BinaryClassifier:
     def informedness(self):
         """Informedness statistic (a.k.a. Youden's J statistic).
 
-        Measure of diagnostic performance, and has a zero value when a 
-        diagnostic test gives the same proportion of positive results for 
-        groups with and without a condition, i.e the test is useless. 
-        A value of 1 indicates that there are no false positives or 
+        Measure of diagnostic performance, and has a zero value when a
+        diagnostic test gives the same proportion of positive results for
+        groups with and without a condition, i.e the test is useless.
+        A value of 1 indicates that there are no false positives or
         false negatives, i.e. the test is perfect.
 
         Calculated as:
@@ -329,7 +329,6 @@ class BinaryClassifier:
         - TN : True Negatives
         - FP : False Positives
         - FN : False Negatives
-
         """
         acc = (self.tp + self.tn) / (self.tp + self.fp + self.fn + self.tn)
         return acc
@@ -345,7 +344,6 @@ class BinaryClassifier:
         - TN : True Negatives
         - FP : False Positives
         - FN : False Negatives
-
         """
         prev = (self.tp + self.fn) / (self.tp + self.fp + self.fn + self.tn)
         return prev
@@ -359,7 +357,6 @@ class BinaryClassifier:
         where
         - TP : True Positives
         - FP : False Positives
-
         """
         ppv = self.tp / (self.tp + self.fp)
         return ppv
@@ -373,7 +370,6 @@ class BinaryClassifier:
         where
         - TN : True Negatives
         - FN : False Negatives
-
         """
         if (self.tn + self.fn) > 0:
             npv = self.tn / (self.tn + self.fn)
@@ -390,7 +386,6 @@ class BinaryClassifier:
         where
         - TP : True Positives
         - FP : False Positives
-
         """
         fdr = self.fp / (self.fp + self.tp)
         return fdr
@@ -404,7 +399,6 @@ class BinaryClassifier:
         where
         - TN : True Negatives
         - FN : False Negatives
-
         """
         if (self.fn + self.tn) > 0:
             for_ = self.fn / (self.fn + self.tn)
@@ -418,7 +412,7 @@ class BinaryClassifier:
         Parameters
         ----------
         use_abbreviations : bool, optional
-            whether to use abbreviations or full names for 
+            whether to use abbreviations or full names for
             index, by default True
 
         Returns

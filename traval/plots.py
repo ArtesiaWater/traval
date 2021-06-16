@@ -369,7 +369,7 @@ def det_plot(fpr, fnr, labels, ax=None, **kwargs):
     labels : list or str
         label for each fpr/fnr entry.
     ax : matplotlib.pyplot.Axes, optional
-        axes handle to plot on, by default None, which 
+        axes handle to plot on, by default None, which
         creates a new figure
 
     Returns
