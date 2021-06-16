@@ -33,7 +33,7 @@ import the package:
 
 .. code:: python
 
-    import metran
+    import traval
 
 
 The first step is generally to define an error detection algorithm. This is 

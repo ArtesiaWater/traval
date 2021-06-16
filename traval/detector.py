@@ -38,7 +38,7 @@ class Detector:
 
     See also
     --------
-    RuleSet : object for defining detection algorithms
+    traval.RuleSet : object for defining detection algorithms
     """
 
     def __init__(self, series, truth=None):
@@ -113,7 +113,7 @@ class Detector:
 
         Parameters
         ----------
-        ruleset : RuleSet
+        ruleset : traval.RuleSet
             RuleSet object containing detection rules
         compare : bool or list of int, optional
             if True, compare all results to original series and store in
@@ -125,7 +125,7 @@ class Detector:
 
         See also
         --------
-        RuleSet : object for defining detection algorithms
+        traval.RuleSet : object for defining detection algorithms
         """
         self.ruleset = ruleset
         d, c = self.ruleset(self.series)
