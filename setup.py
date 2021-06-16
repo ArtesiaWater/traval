@@ -14,9 +14,9 @@ with open("traval/version.py") as fp:
 setup(
     name='traval',
     version=version['__version__'],
-    description='Python package for error detection in time series. '
-                'Create custom error detection algorithms to support '
-                ' in data validation.',
+    description='Python package for applying automatic error detection '
+                'algorithms to timeseries. Create custom error detection '
+                'algorithms to support data validation workflows.',
     long_description=l_d,
     long_description_content_type='text/markdown',
     url='https://github.com/ArtesiaWater/traval',
