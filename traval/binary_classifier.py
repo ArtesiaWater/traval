@@ -375,7 +375,10 @@ class BinaryClassifier:
         - FN : False Negatives
 
         """
-        npv = self.tn / (self.tn + self.fn)
+        if (self.tn + self.fn) > 0:
+            npv = self.tn / (self.tn + self.fn)
+        else:
+            npv = np.nan
         return npv
 
     @property
@@ -403,7 +406,10 @@ class BinaryClassifier:
         - FN : False Negatives
 
         """
-        for_ = self.fn / (self.fn + self.tn)
+        if (self.fn + self.tn) > 0:
+            for_ = self.fn / (self.fn + self.tn)
+        else:
+            for_ = np.nan
         return for_
 
     def get_all_statistics(self, use_abbreviations=True):
