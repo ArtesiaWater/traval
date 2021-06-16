@@ -42,7 +42,7 @@ def ruleset_hook(obj):
             funcname = value[0].split(":")[1]
             try:
                 val = getattr(np, funcname)
-            except:
+            except AttributeError:
                 warnings.warn(f"Could not load function {funcname} "
                               "from `numpy`!")
                 val = (funcname,)
