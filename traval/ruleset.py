@@ -51,7 +51,7 @@ def ruleset_hook(obj):
             try:
                 value = value[7:]  # strip 'series:'
                 obj[key] = pd.read_json(value, typ='series', orient="split")
-            except:
+            except Exception:
                 obj[key] = value
             if isinstance(obj[key], pd.Series):
                 obj[key].index = obj[key].index.tz_localize(None)
