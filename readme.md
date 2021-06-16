@@ -98,8 +98,8 @@ The `SeriesComparison*` objects contain methods to visualize the comparison,
 or summarize the number of observations in each category:
 
 ```python
->>> cp.plot_series_comparison()  # plot a comparison
->>> cp.summary_series_comparison  # series containing number of observations in each category
+>>> cp.plots.plot_series_comparison()  # plot a comparison
+>>> cp.summary  # series containing number of observations in each category
 ```
 
 For more detailed explanation and more complex examples, see the notebook(s) 
