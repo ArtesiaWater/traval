@@ -15,7 +15,8 @@ def test_init_detector():
 
 def test_repr():
     d = test_init_detector()
-    return d.__repr__
+    d.__repr__()
+    return d
 
 
 def test_add_truth():
@@ -40,4 +41,40 @@ def test_reset():
     d = test_apply_ruleset()
     d.reset()
     assert not hasattr(d, "ts_result")
+    return
+
+
+def test_confusion_matrix():
+    d = test_apply_ruleset()
+    cm = d.confusion_matrix()
+    return
+
+
+def test_uniqueness():
+    d = test_apply_ruleset()
+    cm = d.uniqueness()
+    return
+
+
+def test_plot_overview():
+    d = test_apply_ruleset()
+    _ = d.plot_overview()
+    return
+
+
+def test_get_series():
+    d = test_apply_ruleset()
+    _ = d.get_series(2, category="tp")
+    return
+
+
+def test_get_final_result():
+    d = test_apply_ruleset()
+    c = d.get_corrections_dataframe()
+    return
+
+
+def test_get_final_result():
+    d = test_apply_ruleset()
+    r = d.get_final_result()
     return

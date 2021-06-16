@@ -332,13 +332,13 @@ class Detector:
         base = self.results[0]
         base.name = "base series"
 
-        if self.truth is not None:
-            if self.truth.columns.size > 1:
-                truth = self.truth
-            else:
-                truth = self.truth
+        series = [base, self.results[step]]
 
-        df = pd.concat([base, self.results[step], truth], axis=1)
+        if self.truth is not None:
+            truth = self.truth
+            series.append(truth)
+
+        df = pd.concat(series, axis=1)
 
         if category is not None:
             idx = self.get_indices(category=category, step=step)
