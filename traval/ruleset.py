@@ -64,7 +64,7 @@ def ruleset_hook(obj):
         else:
             try:
                 obj[key] = json.loads(value, object_hook=ruleset_hook)
-            except:
+            except Exception:
                 obj[key] = value
     return obj
 
