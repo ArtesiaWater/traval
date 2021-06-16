@@ -34,6 +34,7 @@ setup(
     ],
     platforms='Windows, Mac OS-X, *nix',
     install_requires=['numpy>=1.18',
+                      'scipy>=1.1',
                       'matplotlib>=3.0',
                       'pandas>=0.25'],
     packages=find_packages(exclude=[])
