@@ -32,7 +32,7 @@ def ruleset_hook(obj):
             funcname = value.split(":")[1]
             try:
                 val = getattr(rulelib, funcname)
-            except:
+            except AttributeError:
                 warnings.warn(f"Could not load function {funcname} "
                               "from `traval.rulelib`!")
                 val = funcname
@@ -73,16 +73,16 @@ class RuleSet:
     """Create RuleSet object for storing detection rules.
 
     The RuleSet object stores detection rules and other relevant information
-    in a dictionary. The order in which rules are carried out, the functions 
+    in a dictionary. The order in which rules are carried out, the functions
     that parse the timeseries, the extra arguments required by those functions
     are all stored together.
 
-    The detection functions must take a series as the first argument, and 
-    return a series with corrections based on the detection rule. In the 
-    corrections series invalid values are set to np.nan, and adjustments are 
+    The detection functions must take a series as the first argument, and
+    return a series with corrections based on the detection rule. In the
+    corrections series invalid values are set to np.nan, and adjustments are
     defined with a float. No change is defined as 0. Extra keyword arguments
     for the function can be passed through a kwargs dictionary. These kwargs
-    are also allowed to contain functions. These functions must return some 
+    are also allowed to contain functions. These functions must return some
     value based on the name of the series.
 
 
@@ -247,7 +247,8 @@ class RuleSet:
                 counter += 1
         return params
 
-    def _parse_kwargs(self, kwargs, name=None):
+    @staticmethod
+    def _parse_kwargs(kwargs, name=None):
         """Internal method, parse keyword arguments dictionary.
 
         Iterates over keys, values in kwargs dictionary. If value is callable,
@@ -259,7 +260,7 @@ class RuleSet:
         kwargs: dict
             dictionary of arguments
         name: str, optional
-            function argument for callable kwargs(usually a series name)
+            function argument for callable kwargs (usually a series name)
 
         Returns
         -------
@@ -323,16 +324,6 @@ class RuleSet:
                 raise TypeError("Value of 'apply_to' must be int or tuple "
                                 f"of ints. Got '{irule['apply_to']}'")
         return d, c
-
-    def get_step_name(self, istep):
-        if istep > 0:
-            n = list(self.rules.keys())[istep - 1]
-        elif istep == 0:
-            n = "base series"
-        else:
-            # negative step counts from end
-            n = list(self.rules.keys())[istep]
-        return n
 
     def get_rule(self, istep=None, stepname=None):
         if istep is not None:

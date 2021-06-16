@@ -386,9 +386,7 @@ def det_plot(fpr, fnr, labels, ax=None, **kwargs):
         labels = [labels]
 
     if ax is None:
-        fig, ax = plt.subplots(1, 1, figsize=(10, 8))
-    else:
-        fig = ax.figure
+        _, ax = plt.subplots(1, 1, figsize=(10, 8))
 
     ax.set_aspect("equal")
 

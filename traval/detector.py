@@ -66,6 +66,7 @@ class Detector:
             self.truth = None
 
     def __repr__(self):
+        """String representation of Detector object."""
         return f"Detector: <{self.name}>"
 
     @staticmethod

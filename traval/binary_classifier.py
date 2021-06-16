@@ -102,6 +102,18 @@ class BinaryClassifier:
         return cls(tp, fp, tn, fn)
 
     def __add__(self, other):
+        """Add two BinaryClassification objects.
+
+        Parameters
+        ----------
+        other : traval.BinaryClassifier
+            other BinaryClassifier object
+
+        Returns
+        -------
+        bc : BinaryClassifier
+            new BinaryClassifier object containing sum of two objects
+        """
         if isinstance(other, self.__class__):
             tp = self.true_positives + other.true_positives
             fp = self.false_positives + other.false_positives
