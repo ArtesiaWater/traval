@@ -98,6 +98,8 @@ def test_tp_to_from_csv():
     mask = tp.defaults["value"].apply(lambda s: tp._test_callable(s))
     assert (tp.defaults.loc[~mask].index ==
             tp2.defaults.index).all()
+    assert (tp.defaults.loc[~mask, "value"] ==
+            tp2.defaults.loc[~mask, "value"]).all()
     return
 
 

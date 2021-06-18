@@ -29,7 +29,7 @@ class TravalParameters:
 
     Finally, after selecting one of the storage methods, that file can be
     loaded in a different script to rebuild our RuleSet object. The RuleSet
-    object has to be rebuilt explicitly, bnt the parameters can be obtained
+    object has to be rebuilt explicitly, but the parameters can be obtained
     from the TravalParameters object:
 
     >>> tp = TravalParameters.from_json("traval_params.json")
@@ -145,8 +145,9 @@ class TravalParameters:
     def from_csv(cls, csvfile):
         """Create TravalParameters object from CSV-file.
 
-        Note: parameter value dtypes are not preserved when writing to and
-        reading data from CSV files.
+        Note: parameter value dtypes are preserved for common dtypes when 
+        writing to and reading data from CSV files. Callable parameters
+        are converted to string after writing to CSV.
 
         Parameters
         ----------
@@ -158,6 +159,15 @@ class TravalParameters:
         TravalParameters
         """
         params = pd.read_csv(csvfile, index_col=[0, 1, 2])
+        for i, (v, t) in params.loc[:, ["value", "dtype"]].iterrows():
+            if t == "float":
+                v = float(v)
+            if t == "int":
+                v = int(v)
+            if t == "str":
+                continue  # already str
+            params.loc[i, "value"] = v
+        params.drop(columns=['dtype'], inplace=True)
         parameters, defaults = cls._split_df(params)
         return cls(parameters, defaults)
 
@@ -428,6 +438,7 @@ class TravalParameters:
             parameters are converted to string when writing to CSV.
         """
         df = self._combine_parameter_dfs()
+        df["dtype"] = df["value"].apply(lambda o: type(o).__name__)
         if only_static_params:
             mask = df["value"].apply(lambda s: self._test_callable(s))
             df.loc[~mask].to_csv(csvfile)
