@@ -61,7 +61,7 @@ class TravalParameters:
         self.defaults = self._check_params_dataframe(defaults)
 
     def __repr__(self):
-        """String representation of TravalParameters object."""
+        """Representation of TravalParameters object."""
         return self._combine_parameter_dfs().__repr__()
 
     @property
@@ -145,7 +145,7 @@ class TravalParameters:
     def from_csv(cls, csvfile):
         """Create TravalParameters object from CSV-file.
 
-        Note: parameter value dtypes are preserved for common dtypes when 
+        Note: parameter value dtypes are preserved for common dtypes when
         writing to and reading data from CSV files. Callable parameters
         are converted to string after writing to CSV.
 
@@ -440,7 +440,7 @@ class TravalParameters:
         df = self._combine_parameter_dfs()
         df["dtype"] = df["value"].apply(lambda o: type(o).__name__)
         if only_static_params:
-            mask = df["value"].apply(lambda s: self._test_callable(s))
+            mask = df["value"].apply(self._test_callable)
             df.loc[~mask].to_csv(csvfile)
         else:
             df.to_csv(csvfile)
@@ -459,7 +459,7 @@ class TravalParameters:
         """
         df = self._combine_parameter_dfs()
         if only_static_params:
-            mask = df["value"].apply(lambda s: self._test_callable(s))
+            mask = df["value"].apply(self._test_callable)
             df = df.loc[~mask]
         df.to_json(jsonfile, orient="table")
 
