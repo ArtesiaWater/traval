@@ -235,8 +235,8 @@ class RuleSet:
         return rdf
 
     def get_parameters(self):
-        params = pd.DataFrame()
         cols = ["rulename", "step", "func", "parameter", "value"]
+        params = pd.DataFrame(columns=cols)
         counter = 0
         for rnam, irule in self.rules.items():
             if irule["kwargs"] is None:
