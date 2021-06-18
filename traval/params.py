@@ -1,11 +1,62 @@
-import numpy as np
 import pandas as pd
 
 
 class TravalParameters:
-    """Object for managing parameters for Traval algorithms."""
+    """Object for managing parameters for Traval algorithms.
+
+    Generally not instantiated directly but constructed using one of the
+    available classmethods:
+
+    - `TravalParameters.from_ruleset()`
+    - `TravalParameters.from_csv()`
+    - `TravalParameters.from_json()`
+    - `TravalParameters.from_pickle()`
+
+    A logical workflow would be to define a RuleSet, obtain the parameters
+    using `TravalParameters.from_ruleset()`, optionally adding a list of
+    locations to allow parameters to be set per location. Next, the
+    TravalParameters object can be edited and stored using one of the `to_*`
+    methods:
+
+    - `TravalParameters.to_csv()`
+    - `TravalParameters.to_json()`
+    - `TravalParameters.to_pickle()`
+
+    Note that the CSV and JSON options are human-readable but do not really
+    support storing callable parameter values. These options are only
+    suited to static parameters (i.e. ints, floats and strings). The pickle
+    format does support storing callable arguments, but is not human-readable.
+
+    Finally, after selecting one of the storage methods, that file can be
+    loaded in a different script to rebuild our RuleSet object. The RuleSet
+    object has to be rebuilt explicitly, bnt the parameters can be obtained
+    from the TravalParameters object:
+
+    >>> tp = TravalParameters.from_json("traval_params.json")
+    >>> rset = traval.RuleSet("example_algorithm")
+    >>> rset.add_rule("gt10",
+                      traval.rulelib.rule_ufunc_threshold,
+                      apply_to=0,
+                      kwargs={
+                          "ufunc": (np.greater,),
+                          "threshold": tp.get_parameters(rulename="gt10",
+                                                         parameter="threshold")
+                      })
+    """
 
     def __init__(self, parameters, defaults):
+        """Initialize TravalParameters object.
+
+        Parameters
+        ----------
+        parameters : pandas.DataFrame or None
+            DataFrame containing location specific parameters. Index must be
+            MultiIndex with named levels: (location, rulename, parameter). If
+            None is passed only default parameters are available.
+        defaults : pandas.DataFrame
+            DataFrame containing default parameters. Index must be
+            MultiIndex with named levels: (location, rulename, parameter).
+        """
         self.parameters = self._check_params_dataframe(parameters)
         self.defaults = self._check_params_dataframe(defaults)
 
@@ -126,7 +177,6 @@ class TravalParameters:
         Returns
         -------
         TravalParameters
-            [description]
         """
         params = pd.read_json(jsonfile, orient="table", typ="frame")
         parameters, defaults = cls._split_df(params)
