@@ -6,7 +6,9 @@ import pandas as pd
 from .ts_utils import (diff_with_gap_awareness,
                        interpolate_series_to_new_index,
                        mask_corrections_as_nan,
-                       resample_short_series_to_long_series, spike_finder)
+                       resample_short_series_to_long_series,
+                       spike_finder,
+                       )
 
 
 def rule_funcdict_to_nan(series, funcdict):
@@ -223,7 +225,7 @@ def rule_spike_detection(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
     return mask_corrections_as_nan(series, mask)
 
 
-def rule_offset_detection(series, threshold=0.35, updown_diff=0.1,
+def rule_offset_detection(series, threshold=0.15, updown_diff=0.1,
                           max_gap="7D", return_df=False):
     """Detection rule, detect periods with an offset error.
 
@@ -605,7 +607,7 @@ def rule_combine_nan_and(*args):
 
 
 def rule_flat_signal(series, window, min_obs, std_threshold=7.5e-3,
-                     qbelow=None, qabove=None):
+                     qbelow=None, qabove=None, hbelow=None, habove=None):
     """Detection rule, flag values based on dead signal in rolling window.
 
     Flag values when variation in signal within a window falls below a
@@ -631,6 +633,12 @@ def rule_flat_signal(series, window, min_obs, std_threshold=7.5e-3,
         quantile value between 0 and 1, signifying a lower
         limit. Only search for flat signals above this limit.
         By default None.
+    hbelow : float, optional
+        absolute value in units of timeseries signifying an upper limit.
+        Only search for flat signals below this limit. By default None.
+    habove : float, optional
+        absolute value in units of timeseries signifying a lower limit.
+        Only search for flat signals above this limit. By default None.
 
     Returns
     -------
@@ -645,16 +653,25 @@ def rule_flat_signal(series, window, min_obs, std_threshold=7.5e-3,
     stdmask = (stdfilt < std_threshold)
 
     if qabove is None and qbelow is not None:
-        levelmask = s < s.quantile(qbelow)
+        quantilemask = s < s.quantile(qbelow)
     elif qabove is not None and qbelow is None:
-        levelmask = s > s.quantile(qabove)
+        quantilemask = s > s.quantile(qabove)
     elif qabove is not None and qbelow is not None:
-        levelmask = ((s > s.quantile(qabove)) |
-                     (s < s.quantile(qbelow)))
+        quantilemask = ((s > s.quantile(qabove)) |
+                        (s < s.quantile(qbelow)))
+    else:
+        quantilemask = (s == s)
+
+    if habove is None and hbelow is not None:
+        levelmask = s < hbelow
+    elif habove is not None and hbelow is None:
+        levelmask = s > habove
+    elif habove is not None and hbelow is not None:
+        levelmask = ((s > habove) | (s < hbelow))
     else:
         levelmask = (s == s)
 
-    mask = (stdmask & levelmask)
+    mask = (stdmask & quantilemask & levelmask)
     mask = mask.reindex(series.index, fill_value=False)
 
     return mask_corrections_as_nan(series, mask)
