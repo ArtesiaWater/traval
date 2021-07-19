@@ -479,7 +479,7 @@ def rule_pastas_percentile_pi(series, ml, alpha=0.1, tmin=None, tmax=None,
         corrections.name = "sim"
     # calculate realizations
 
-    pass
+    # TODO: work in progress
 
 
 def rule_keep_comments(series, keep_comments, comment_series, other_series):
