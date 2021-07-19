@@ -1,3 +1,4 @@
+import os
 from operator import or_
 
 import numpy as np
@@ -388,7 +389,7 @@ def rule_outside_bandwidth(series, lowerbound, upperbound):
 
 
 def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None,
-                           verbose=False):
+                           savedir=None, verbose=False):
     """Detection rule, flag values based on pastas model prediction interval.
 
     Flag suspect outside prediction interval calculated by pastas timeseries
@@ -404,8 +405,12 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None,
         confidence interval for calculating bandwidth, by default 0.95.
         Higher confidence interval means that bandwidth is wider and more
         observations will fall within the bounds.
+    tmin : str or pd.Timestamp, optional
+        set tmin for model simulation
     tmax : str or pd.Timestamp, optional
         set tmax for model simulation
+    savedir : str, optional
+        save calculated prediction interval to folder as pickle file.
 
     Returns
     -------
@@ -450,7 +455,31 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None,
                                                  pi.iloc[:, 0],
                                                  pi.iloc[:, 1])
             corrections.name = "sim (r^2={0:.3f})".format(ml.stats.rsq())
+
+            if savedir:
+                pi.to_pickle(os.path.join(savedir, f"pi_{ml.name}.pkl"))
     return corrections
+
+
+def rule_pastas_percentile_pi(series, ml, alpha=0.1, tmin=None, tmax=None,
+                              verbose=False):
+    # no model
+    if ml is None:
+        if verbose:
+            print("Warning: No Pastas model found!")
+        corrections = mask_corrections_as_nan(
+            series, pd.Series(index=series.index, data=False))
+        corrections.name = "sim"
+    # no fit
+    elif ml.fit is None:
+        if verbose:
+            print("Warning: Pastas model fit attribute is None!")
+        corrections = mask_corrections_as_nan(
+            series, pd.Series(index=series.index, data=False))
+        corrections.name = "sim"
+    # calculate realizations
+
+    pass
 
 
 def rule_keep_comments(series, keep_comments, comment_series, other_series):
