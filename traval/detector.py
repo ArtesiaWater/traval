@@ -1,7 +1,8 @@
+from copy import deepcopy
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from copy import deepcopy
 
 from .ts_comparison import SeriesComparison, SeriesComparisonRelative
 from .ts_utils import unique_nans_in_series

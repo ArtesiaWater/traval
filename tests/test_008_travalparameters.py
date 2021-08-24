@@ -1,6 +1,7 @@
 import os
+
 import numpy as np
-from traval import TravalParameters, RuleSet, rulelib
+from traval import RuleSet, TravalParameters, rulelib
 
 
 def get_ruleset1():
@@ -51,8 +52,8 @@ def test_tp_from_ruleset_w_locations():
 
 def test_tp_get_parameters_defaults():
     tp = test_tp_from_ruleset()
-    p1 = tp.get_parameters()  # return all defaults
-    p2 = tp.get_parameters(rulename="gt10")  # return all params for rule
+    _ = tp.get_parameters()  # return all defaults
+    _ = tp.get_parameters(rulename="gt10")  # return all params for rule
     p3 = tp.get_parameters(rulename="gt10", parameter="threshold")  # value
     assert isinstance(p3, float)
     try:
@@ -69,10 +70,10 @@ def test_tp_get_parameters_defaults():
 
 def test_tp_get_parameters_location_specific():
     tp = test_tp_from_ruleset_w_locations()
-    p1 = tp.get_parameters()  # return all defaults
-    p2 = tp.get_parameters(location="loc1")  # return all for location
+    _ = tp.get_parameters()  # return all defaults
+    _ = tp.get_parameters(location="loc1")  # return all for location
     # return loc params for rule
-    p3 = tp.get_parameters(location="loc1", rulename="gt10")
+    _ = tp.get_parameters(location="loc1", rulename="gt10")
     p4 = tp.get_parameters(location="loc1", rulename="gt10",
                            parameter="threshold")  # value
     assert isinstance(p4, float)

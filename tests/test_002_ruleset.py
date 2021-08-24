@@ -1,7 +1,7 @@
-from traval.ruleset import RuleSet
-import traval
-import pandas as pd
 import numpy as np
+import pandas as pd
+import traval
+from traval.ruleset import RuleSet
 
 
 def func1(s):
@@ -62,7 +62,7 @@ def test_applyself_static_kwargs():
                        data=range(-5, 23, 3),
                        name="test_series")
     rset = test_add_rules()
-    d, c = rset(series)
+    _, _ = rset(series)
     return
 
 
