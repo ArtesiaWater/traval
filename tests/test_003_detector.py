@@ -68,7 +68,7 @@ def test_get_series():
     return
 
 
-def test_get_final_result():
+def test_get_corrections():
     d = test_apply_ruleset()
     _ = d.get_corrections_dataframe()
     return
