@@ -23,3 +23,5 @@ pylint:
     # Disable unnecessary else after return as it complains when returning in an else statement
     # which is often more readable
     - no-else-return
+    - too-many-arguments
+    - too-many-locals
