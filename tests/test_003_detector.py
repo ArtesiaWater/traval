@@ -46,13 +46,13 @@ def test_reset():
 
 def test_confusion_matrix():
     d = test_apply_ruleset()
-    cm = d.confusion_matrix()
+    _ = d.confusion_matrix()
     return
 
 
 def test_uniqueness():
     d = test_apply_ruleset()
-    cm = d.uniqueness()
+    _ = d.uniqueness()
     return
 
 
@@ -76,5 +76,5 @@ def test_get_final_result():
 
 def test_get_final_result():
     d = test_apply_ruleset()
-    r = d.get_final_result()
+    _ = d.get_final_result()
     return
