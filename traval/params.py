@@ -291,7 +291,7 @@ class TravalParameters:
         elif self.parameters is not None:
             mask = self.parameters.index.get_level_values(0) == location
             if mask.sum() == 0:
-                raise KeyError("Location '{location}' not in parameters"
+                raise KeyError(f"Location '{location}' not in parameters"
                                " DataFrame!")
             p = self.parameters.loc[idx[mask, :, :], :]
         else:
