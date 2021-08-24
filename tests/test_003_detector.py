@@ -70,7 +70,7 @@ def test_get_series():
 
 def test_get_final_result():
     d = test_apply_ruleset()
-    c = d.get_corrections_dataframe()
+    _ = d.get_corrections_dataframe()
     return
 
 
