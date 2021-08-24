@@ -1,6 +1,7 @@
 import os
+
 import numpy as np
-from traval import TravalParameters, RuleSet, rulelib
+from traval import RuleSet, TravalParameters, rulelib
 
 
 def get_ruleset1():

@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-
 from traval import SeriesComparison, SeriesComparisonRelative
 
 

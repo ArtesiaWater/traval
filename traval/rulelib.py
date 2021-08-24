@@ -7,9 +7,7 @@ import pandas as pd
 from .ts_utils import (diff_with_gap_awareness,
                        interpolate_series_to_new_index,
                        mask_corrections_as_nan,
-                       resample_short_series_to_long_series,
-                       spike_finder,
-                       )
+                       resample_short_series_to_long_series, spike_finder)
 
 
 def rule_funcdict_to_nan(series, funcdict):

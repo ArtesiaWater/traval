@@ -1,7 +1,7 @@
-from traval.ruleset import RuleSet
-import traval
-import pandas as pd
 import numpy as np
+import pandas as pd
+import traval
+from traval.ruleset import RuleSet
 
 
 def func1(s):
