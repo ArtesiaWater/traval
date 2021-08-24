@@ -62,7 +62,7 @@ def test_applyself_static_kwargs():
                        data=range(-5, 23, 3),
                        name="test_series")
     rset = test_add_rules()
-    d, c = rset(series)
+    _, _ = rset(series)
     return
 
 
