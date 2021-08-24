@@ -229,7 +229,7 @@ class RuleSet:
         rdf : pandas.DataFrame
             DataFrame containing all the information from the RuleSet
         """
-        rules = [irule for irule in self.rules.values()]
+        rules = self.rules.values()
         rdf = pd.DataFrame(rules, index=range(1, len(rules) + 1))
         rdf.index.name = "step"
         return rdf

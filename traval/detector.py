@@ -416,8 +416,7 @@ class Detector:
         df : pandas.DataFrame
             results with flagged values set to NaN per applied rule.
         """
-        df = pd.concat([s for s in self.results.values()],
-                       axis=1)
+        df = pd.concat(self.results.values(), axis=1)
         df.columns = ["base series"] + list(self.ruleset.rules.keys())
         return df
 

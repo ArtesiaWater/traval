@@ -94,7 +94,7 @@ class BinaryClassifier:
         """
         if isinstance(cmat, pd.DataFrame):
             [tp, fn], [fp, tn] = cmat.values
-        elif isinstance(cmat, np.array):
+        elif isinstance(cmat, np.ndarray):
             [tp, fn], [fp, tn] = cmat
         else:
             raise TypeError("Cannot parse confusion matrix of type: "
@@ -291,7 +291,7 @@ class BinaryClassifier:
         """
         fp = self.false_positives
         tn = self.true_negatives
-        if fp + tn > 0:
+        if (fp + tn) > 0:
             return fp / (fp + tn)
         else:
             return np.nan
