@@ -258,7 +258,7 @@ def rule_offset_detection(series, threshold=0.15, updown_diff=0.1,
     """
 
     # identify gaps and set diff value after gap to nan
-    diff = diff_with_gap_awareness(series, max_gap="7D")
+    diff = diff_with_gap_awareness(series, max_gap=max_gap)
 
     diff_up = diff.copy()
     diff_up.loc[diff < 0.0] = np.nan
@@ -628,7 +628,7 @@ def rule_combine_nan_and(*args):
             mask = series.isna()
         else:
             mask = mask & series.isna()
-    result = series.copy()
+    result = args[0].copy()
     result.loc[mask] = np.nan
     return result
 
@@ -687,7 +687,7 @@ def rule_flat_signal(series, window, min_obs, std_threshold=7.5e-3,
         quantilemask = ((s > s.quantile(qabove)) |
                         (s < s.quantile(qbelow)))
     else:
-        quantilemask = (s == s)
+        quantilemask = pd.Series(index=s.index, data=True, dtype=bool)
 
     if habove is None and hbelow is not None:
         levelmask = s < hbelow
@@ -696,7 +696,7 @@ def rule_flat_signal(series, window, min_obs, std_threshold=7.5e-3,
     elif habove is not None and hbelow is not None:
         levelmask = ((s > habove) | (s < hbelow))
     else:
-        levelmask = (s == s)
+        levelmask = pd.Series(index=s.index, data=True, dtype=bool)
 
     mask = (stdmask & quantilemask & levelmask)
     mask = mask.reindex(series.index, fill_value=False)
