@@ -97,7 +97,7 @@ class Detector:
             raise TypeError(
                 "Series must be pandas.Series or pandas.DataFrame!")
         # check dtype (of first col)
-        if dtype != float:
+        if not dtype in [float, np.float32]:
             raise TypeError("Series (or first column of DataFrame) must "
                             "have dtype float!")
         return name
