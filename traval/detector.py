@@ -91,7 +91,7 @@ class Detector:
             dtype = series.dtypes
             name = series.name
         elif isinstance(series, pd.DataFrame):
-            dtype = series.dtypes[0]
+            dtype = series.dtypes.values[0]
             name = series.columns[0]
         else:
             raise TypeError(
