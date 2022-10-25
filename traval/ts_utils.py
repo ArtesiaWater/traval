@@ -19,8 +19,12 @@ def mask_corrections_as_nan(series, mask):
     c : pd.Series
         return corrections series
     """
-    c = pd.Series(index=series.index, data=np.zeros(series.index.size),
-                  fastpath=True, dtype=float)
+    c = pd.Series(
+        index=series.index,
+        data=np.zeros(series.index.size),
+        fastpath=True,
+        dtype=float,
+    )
     c.loc[mask] = np.nan
     return c
 
@@ -51,9 +55,7 @@ def resample_short_series_to_long_series(short_series, long_series):
         first_date_after = long_series.loc[mask].index[0]
         new_series.loc[first_date_after] = short_series.iloc[i]
 
-    new_series = (new_series
-                  .fillna(method="ffill")
-                  .fillna(method="bfill"))
+    new_series = new_series.fillna(method="ffill").fillna(method="bfill")
     return new_series
 
 
@@ -130,10 +132,16 @@ def spike_finder(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
     # Mask spikes to only include large ones
     # use spike moments from above and check whether
     # jump in head is larger than threshold.
-    upspikes = diff.loc[spike_up.dropna().index].where(
-        lambda s: s > threshold).dropna()
-    downspikes = diff.loc[spike_down.dropna().index].where(
-        lambda s: s < -threshold).dropna()
+    upspikes = (
+        diff.loc[spike_up.dropna().index]
+        .where(lambda s: s > threshold)
+        .dropna()
+    )
+    downspikes = (
+        diff.loc[spike_down.dropna().index]
+        .where(lambda s: s < -threshold)
+        .dropna()
+    )
     return upspikes, downspikes
 
 
@@ -178,10 +186,10 @@ def interpolate_series_to_new_index(series, new_index):
         new series with new index, with interpolated values
     """
     # interpolate to new index
-    s_interp = np.interp(new_index, series.index.asi8, series.values,
-                         left=np.nan, right=np.nan)
-    si = pd.Series(index=new_index, data=s_interp,
-                   dtype=float, fastpath=True)
+    s_interp = np.interp(
+        new_index, series.index.asi8, series.values, left=np.nan, right=np.nan
+    )
+    si = pd.Series(index=new_index, data=s_interp, dtype=float, fastpath=True)
     return si
 
 
@@ -247,7 +255,26 @@ def create_synthetic_raw_timeseries(raw_series, truth_series, comments):
 
     # create synthetic raw series
     synth_raw = truth_series.loc[idx_in_both].copy()
-    synth_raw.loc[mask_comments] = \
-        raw_series.loc[idx_in_both].loc[mask_comments]
+    synth_raw.loc[mask_comments] = raw_series.loc[idx_in_both].loc[
+        mask_comments
+    ]
 
     return synth_raw
+
+
+def shift_series_forward_backward(s, freqstr="1D"):
+    n = int(freqstr[:-1]) if freqstr[:-1].isnumeric() else 1
+    freq = freqstr[-1] if freqstr[:-1].isalpha() else "D"
+    shift_forward = s.shift(periods=n, freq=freq)
+    shift_backward = s.shift(periods=-n, freq=freq)
+    return pd.concat([shift_backward, s, shift_forward], axis=1)
+
+
+def smooth_upper_bound(b, smoothfreq="1D"):
+    smoother = shift_series_forward_backward(b, freqstr=smoothfreq)
+    return smoother.max(axis=1)
+
+
+def smooth_lower_bound(b, smoothfreq="1D"):
+    smoother = shift_series_forward_backward(b, freqstr=smoothfreq)
+    return smoother.min(axis=1)
