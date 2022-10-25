@@ -140,7 +140,7 @@ class ComparisonPlots:
         plot_labels = [i.get_label() for i in plot_handles]
         ax.legend(plot_handles, plot_labels, loc="best",
                   ncol=int(np.ceil(len(plot_handles) / 2.)))
-        ax.grid(b=True)
+        ax.grid(visible=True)
         fig.tight_layout()
         return ax
 
@@ -272,7 +272,7 @@ class ComparisonPlots:
         plot_labels = [i.get_label() for i in plot_handles]
         ax.legend(plot_handles, plot_labels, loc=(0, 1), markerscale=1.25,
                   ncol=len(plot_handles), frameon=False)
-        ax.grid(b=True)
+        ax.grid(visible=True)
         fig.tight_layout()
 
         return ax
@@ -336,7 +336,7 @@ def roc_plot(tpr, fpr, labels, colors=None, ax=None,
 
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
-    ax.grid(b=True)
+    ax.grid(visible=True)
     ax.legend(loc="lower right")
     ax.set_ylabel("True Positive Rate (sensitivity)")
     ax.set_xlabel("False Positive Rate (1-specificity)")
@@ -410,7 +410,7 @@ def det_plot(fpr, fnr, labels, ax=None, **kwargs):
     ax.set_yticks(tick_locations)
     ax.set_yticklabels(tick_labels)
     ax.set_ylim(-3, 3)
-    ax.grid(b=True)
+    ax.grid(visible=True)
 
     ax.set_title("detection error tradeoff plot")
 

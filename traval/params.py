@@ -162,10 +162,12 @@ class TravalParameters:
         for i, (v, t) in params.loc[:, ["value", "dtype"]].iterrows():
             if t == "float":
                 v = float(v)
-            if t == "int":
+            elif t == "int":
                 v = int(v)
-            if t == "str":
+            elif t == "str":
                 continue  # already str
+            elif t == "NoneType":
+                v = None
             params.loc[i, "value"] = v
         params.drop(columns=['dtype'], inplace=True)
         parameters, defaults = cls._split_df(params)

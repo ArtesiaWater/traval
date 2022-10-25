@@ -4,10 +4,15 @@ from operator import or_
 import numpy as np
 import pandas as pd
 
-from .ts_utils import (diff_with_gap_awareness,
-                       interpolate_series_to_new_index,
-                       mask_corrections_as_nan,
-                       resample_short_series_to_long_series, spike_finder)
+from .ts_utils import (
+    diff_with_gap_awareness,
+    interpolate_series_to_new_index,
+    mask_corrections_as_nan,
+    resample_short_series_to_long_series,
+    smooth_lower_bound,
+    smooth_upper_bound,
+    spike_finder,
+)
 
 
 def rule_funcdict_to_nan(series, funcdict):
@@ -65,8 +70,11 @@ def rule_max_gradient(series, max_step=0.5, max_timestep="1D"):
         corrections. Suspect values are set to np.nan.
     """
     conversion = pd.Timedelta(max_timestep) / pd.Timedelta("1S")
-    grad = (series.diff() /
-            series.index.to_series().diff().dt.total_seconds() * conversion)
+    grad = (
+        series.diff()
+        / series.index.to_series().diff().dt.total_seconds()
+        * conversion
+    )
     mask = grad.abs() > max_step
     return mask_corrections_as_nan(series, mask)
 
@@ -103,8 +111,9 @@ def rule_ufunc_threshold(series, ufunc, threshold, offset=0.0):
     """
     ufunc = ufunc[0]
     if isinstance(threshold, pd.Series):
-        full_threshold_series = \
-            resample_short_series_to_long_series(threshold, series)
+        full_threshold_series = resample_short_series_to_long_series(
+            threshold, series
+        )
         mask = ufunc(series, full_threshold_series.add(offset))
     else:
         mask = ufunc(series, threshold + offset)
@@ -216,16 +225,16 @@ def rule_spike_detection(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
     """
-    upspikes, downspikes = spike_finder(series,
-                                        threshold=threshold,
-                                        spike_tol=spike_tol,
-                                        max_gap=max_gap)
+    upspikes, downspikes = spike_finder(
+        series, threshold=threshold, spike_tol=spike_tol, max_gap=max_gap
+    )
     mask = upspikes.index.union(downspikes.index)
     return mask_corrections_as_nan(series, mask)
 
 
-def rule_offset_detection(series, threshold=0.15, updown_diff=0.1,
-                          max_gap="7D", return_df=False):
+def rule_offset_detection(
+    series, threshold=0.15, updown_diff=0.1, max_gap="7D", return_df=False
+):
     """Detection rule, detect periods with an offset error.
 
     This rule looks for jumps in both positive and negative direction that
@@ -288,16 +297,22 @@ def rule_offset_detection(series, threshold=0.15, updown_diff=0.1,
             index_best_match = idiff.abs().idxmin()
             if idiff.loc[index_best_match] <= updown_diff:
                 periods += [i, index_best_match]
-                df.loc[j] = [i, index_best_match, dh,
-                             jump_df.loc[index_best_match],
-                             idiff.loc[index_best_match]]
+                df.loc[j] = [
+                    i,
+                    index_best_match,
+                    dh,
+                    jump_df.loc[index_best_match],
+                    idiff.loc[index_best_match],
+                ]
                 j += 1
 
-    corrections = pd.Series(index=series.index, data=np.zeros(
-        series.index.size), fastpath=True)
+    corrections = pd.Series(
+        index=series.index, data=np.zeros(series.index.size), fastpath=True
+    )
     for j in range(0, len(periods), 2):
-        corrections.loc[periods[j]:periods[j + 1] -
-                        pd.Timedelta(seconds=30)] = np.nan
+        corrections.loc[
+            periods[j] : periods[j + 1] - pd.Timedelta(seconds=30)
+        ] = np.nan
     if return_df:
         return corrections, df
     else:
@@ -322,8 +337,9 @@ def rule_outside_n_sigma(series, n=2.0):
 
     """
 
-    mask = ((series > series.mean() + n * series.std())
-            | (series < series.mean() - n * series.std()))
+    mask = (series > series.mean() + n * series.std()) | (
+        series < series.mean() - n * series.std()
+    )
     return mask_corrections_as_nan(series, mask)
 
 
@@ -386,8 +402,17 @@ def rule_outside_bandwidth(series, lowerbound, upperbound):
     return mask_corrections_as_nan(series, mask)
 
 
-def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None,
-                           savedir=None, verbose=False):
+def rule_pastas_outside_pi(
+    series,
+    ml,
+    ci=0.95,
+    min_ci=None,
+    smoothfreq=None,
+    tmin=None,
+    tmax=None,
+    savedir=None,
+    verbose=False,
+):
     """Detection rule, flag values based on pastas model prediction interval.
 
     Flag suspect outside prediction interval calculated by pastas timeseries
@@ -403,6 +428,15 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None,
         confidence interval for calculating bandwidth, by default 0.95.
         Higher confidence interval means that bandwidth is wider and more
         observations will fall within the bounds.
+    min_ci : float, optional
+        value indicating minimum distance between upper and lower
+        bounds, if ci does not meet this requirement, this value is added
+        to the bounds. This can be used to prevent extremely narrow prediction
+        intervals. Default is None.
+    smoothfreq : str, optional
+        str indicating no. of periods and frequency str (i.e. "1D") for
+        smoothing upper and lower bounds only used if smoothbounds=True,
+        default is None.
     tmin : str or pd.Timestamp, optional
         set tmin for model simulation
     tmax : str or pd.Timestamp, optional
@@ -421,14 +455,16 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None,
         if verbose:
             print("Warning: No Pastas model found!")
         corrections = mask_corrections_as_nan(
-            series, pd.Series(index=series.index, data=False))
+            series, pd.Series(index=series.index, data=False)
+        )
         corrections.name = "sim"
     # no fit
     elif ml.fit is None:
         if verbose:
             print("Warning: Pastas model fit attribute is None!")
         corrections = mask_corrections_as_nan(
-            series, pd.Series(index=series.index, data=False))
+            series, pd.Series(index=series.index, data=False)
+        )
         corrections.name = "sim"
     # calculate pi
     else:
@@ -443,15 +479,32 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None,
         # prediction interval empty
         if pi.empty:
             if verbose:
-                print("Warning: calculated prediction interval with "
-                      "Pastas model is empty!")
+                print(
+                    "Warning: calculated prediction interval with "
+                    "Pastas model is empty!"
+                )
             corrections = mask_corrections_as_nan(
-                series, pd.Series(index=series.index, data=False))
+                series, pd.Series(index=series.index, data=False)
+            )
             corrections.name = "sim"
         else:
-            corrections = rule_outside_bandwidth(series,
-                                                 pi.iloc[:, 0],
-                                                 pi.iloc[:, 1])
+            lower = pi.iloc[:, 0]
+            upper = pi.iloc[:, 1]
+
+            # apply time-shift smoothing
+            if smoothfreq is not None:
+                upper = smooth_upper_bound(upper, smoothfreq=smoothfreq)
+                lower = smooth_lower_bound(lower, smoothfreq=smoothfreq)
+
+            # apply minimum ci if passed
+            if min_ci is not None:
+                # check if mean of current interval is smalller than ci
+                if (upper - lower).mean() < min_ci:
+                    # adjust bounds with half of min_ci each
+                    upper = upper + min_ci / 2.0
+                    lower = lower - min_ci / 2.0
+
+            corrections = rule_outside_bandwidth(series, lower, upper)
             corrections.name = "sim (r^2={0:.3f})".format(ml.stats.rsq())
 
             if savedir:
@@ -459,21 +512,24 @@ def rule_pastas_outside_pi(series, ml, ci=0.95, tmin=None, tmax=None,
     return corrections
 
 
-def rule_pastas_percentile_pi(series, ml, alpha=0.1, tmin=None, tmax=None,
-                              verbose=False):
+def rule_pastas_percentile_pi(
+    series, ml, alpha=0.1, tmin=None, tmax=None, verbose=False
+):
     # no model
     if ml is None:
         if verbose:
             print("Warning: No Pastas model found!")
         corrections = mask_corrections_as_nan(
-            series, pd.Series(index=series.index, data=False))
+            series, pd.Series(index=series.index, data=False)
+        )
         corrections.name = "sim"
     # no fit
     elif ml.fit is None:
         if verbose:
             print("Warning: Pastas model fit attribute is None!")
         corrections = mask_corrections_as_nan(
-            series, pd.Series(index=series.index, data=False))
+            series, pd.Series(index=series.index, data=False)
+        )
         corrections.name = "sim"
     # calculate realizations
 
@@ -522,8 +578,9 @@ def rule_keep_comments(series, keep_comments, comment_series, other_series):
     return corrections
 
 
-def rule_shift_to_manual_obs(series, hseries, method="linear",
-                             max_dt="1D", reset_dates=None):
+def rule_shift_to_manual_obs(
+    series, hseries, method="linear", max_dt="1D", reset_dates=None
+):
     """Adjustment rule, for shifting timeseries onto manual observations.
 
     Used for shifting timeseries based on sensor observations onto manual
@@ -557,14 +614,18 @@ def rule_shift_to_manual_obs(series, hseries, method="linear",
     # check if time between manual obs and sensor obs
     # are further apart than max_dt:
     nearest = hseries.index.map(
-        lambda t: series.index.get_loc(t, method="nearest"))
-    mask = np.abs((series.index[nearest] - hseries.index).total_seconds()
-                  ) <= (pd.Timedelta(max_dt) / pd.Timedelta("1S"))
+        lambda t: series.index.get_loc(t, method="nearest")
+    )
+    mask = np.abs((series.index[nearest] - hseries.index).total_seconds()) <= (
+        pd.Timedelta(max_dt) / pd.Timedelta("1S")
+    )
 
     # interpolate raw obs to manual obs times
-    s_obs = series.reindex(series.index.join(
-        hseries.index, how="outer")).interpolate(
-            method="time").loc[hseries.index]
+    s_obs = (
+        series.reindex(series.index.join(hseries.index, how="outer"))
+        .interpolate(method="time")
+        .loc[hseries.index]
+    )
 
     # calculate diff
     diff = s_obs - hseries
@@ -578,9 +639,13 @@ def rule_shift_to_manual_obs(series, hseries, method="linear",
 
     # interpolate w/ method
     if method == "linear":
-        diff_full_index = diff.reindex(series.index.join(
-            diff.index, how="outer"), method=None).interpolate(
-                method="linear").fillna(0.0)
+        diff_full_index = (
+            diff.reindex(
+                series.index.join(diff.index, how="outer"), method=None
+            )
+            .interpolate(method="linear")
+            .fillna(0.0)
+        )
     else:
         diff_full_index = diff.reindex(series.index, method=method).fillna(0.0)
 
@@ -614,7 +679,7 @@ def rule_combine_nan_and(*args):
     """Combination rule, combine NaN values for any number of timeseries.
 
     Used for combining intermediate results in branching algorithm trees to
-    create one final result, i.e. , i.e. (s1.isna() AND s2.isna())
+    create one final result, i.e. (s1.isna() AND s2.isna())
 
     Returns
     -------
@@ -633,8 +698,16 @@ def rule_combine_nan_and(*args):
     return result
 
 
-def rule_flat_signal(series, window, min_obs, std_threshold=7.5e-3,
-                     qbelow=None, qabove=None, hbelow=None, habove=None):
+def rule_flat_signal(
+    series,
+    window,
+    min_obs,
+    std_threshold=7.5e-3,
+    qbelow=None,
+    qabove=None,
+    hbelow=None,
+    habove=None,
+):
     """Detection rule, flag values based on dead signal in rolling window.
 
     Flag values when variation in signal within a window falls below a
@@ -675,17 +748,15 @@ def rule_flat_signal(series, window, min_obs, std_threshold=7.5e-3,
         or dead.
     """
     s = series.dropna()
-    stdfilt = s.dropna().rolling(
-        f'{int(window)}D', min_periods=min_obs).std()
-    stdmask = (stdfilt < std_threshold)
+    stdfilt = s.dropna().rolling(f"{int(window)}D", min_periods=min_obs).std()
+    stdmask = stdfilt < std_threshold
 
     if qabove is None and qbelow is not None:
         quantilemask = s < s.quantile(qbelow)
     elif qabove is not None and qbelow is None:
         quantilemask = s > s.quantile(qabove)
     elif qabove is not None and qbelow is not None:
-        quantilemask = ((s > s.quantile(qabove)) |
-                        (s < s.quantile(qbelow)))
+        quantilemask = (s > s.quantile(qabove)) | (s < s.quantile(qbelow))
     else:
         quantilemask = pd.Series(index=s.index, data=True, dtype=bool)
 
@@ -694,11 +765,11 @@ def rule_flat_signal(series, window, min_obs, std_threshold=7.5e-3,
     elif habove is not None and hbelow is None:
         levelmask = s > habove
     elif habove is not None and hbelow is not None:
-        levelmask = ((s > habove) | (s < hbelow))
+        levelmask = (s > habove) | (s < hbelow)
     else:
         levelmask = pd.Series(index=s.index, data=True, dtype=bool)
 
-    mask = (stdmask & quantilemask & levelmask)
+    mask = stdmask & quantilemask & levelmask
     mask = mask.reindex(series.index, fill_value=False)
 
     return mask_corrections_as_nan(series, mask)

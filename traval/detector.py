@@ -91,7 +91,7 @@ class Detector:
             dtype = series.dtypes
             name = series.name
         elif isinstance(series, pd.DataFrame):
-            dtype = series.dtypes[0]
+            dtype = series.dtypes.values[0]
             name = series.columns[0]
         else:
             raise TypeError(
@@ -456,6 +456,49 @@ class Detector:
               .replace(0.0, np.nan)
               .replace(1.0, 0.0))
         df.columns = list(self.ruleset.rules.keys())
+        return df
+
+    def get_corrections_comparison(self, truth=None):
+
+        if truth is None and self.truth is not None:
+            truth = self.truth
+        else:
+            raise ValueError("Supply a time series for 'truth'!")
+
+        comments_traval = self.get_comment_series()
+        comments_traval.name = "traval_comment"
+
+        mask_truth_corrections = truth.iloc[:, 0].isna()
+        comments_truth = truth.loc[mask_truth_corrections]
+
+        k = list(self.comparisons.keys())[-1]
+        comparison = self.comparisons[k].comparison_series()
+        translate = {
+            -1: "Value modified",
+            0: "Flagged in both",
+            1: "Only flagged in 'truth' series",
+            2: "Only flagged in 'traval' series",
+            -9999: "NaN in both"
+        }
+        comparison = comparison.apply(lambda v: translate[v])
+        comparison.name = "comparison_label"
+
+        raw_index = (comments_traval.index
+                     .union(comments_truth.index))
+
+        truth.columns = ["truth_series", "truth_comment"]
+
+        traval_series = self.get_final_result()
+        traval_series.name = "traval_series"
+
+        df = pd.concat([
+            self.series.loc[raw_index.intersection(self.series.index)],
+            traval_series.loc[raw_index.intersection(traval_series.index)],
+            comments_traval,
+            truth.loc[raw_index.intersection(truth.index)],
+            comparison.loc[raw_index.intersection(comparison.index)]
+        ], axis=1)
+
         return df
 
     def plot_overview(self, mark_suspects=True, **kwargs):
