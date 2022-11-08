@@ -159,6 +159,7 @@ class TravalParameters:
         TravalParameters
         """
         params = pd.read_csv(csvfile, index_col=[0, 1, 2])
+        params.sort_index(inplace=True)
         for i, (v, t) in params.loc[:, ["value", "dtype"]].iterrows():
             if t == "float":
                 v = float(v)

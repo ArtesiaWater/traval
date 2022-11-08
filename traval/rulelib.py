@@ -498,7 +498,7 @@ def rule_pastas_outside_pi(
 
             # apply minimum ci if passed
             if min_ci is not None:
-                # check if mean of current interval is smalller than ci
+                # check if mean of current interval is smaller than ci
                 if (upper - lower).mean() < min_ci:
                     # adjust bounds with half of min_ci each
                     upper = upper + min_ci / 2.0
