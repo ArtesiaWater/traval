@@ -272,9 +272,13 @@ def shift_series_forward_backward(s, freqstr="1D"):
 
 def smooth_upper_bound(b, smoothfreq="1D"):
     smoother = shift_series_forward_backward(b, freqstr=smoothfreq)
-    return smoother.max(axis=1)
+    smoother.iloc[:, 0] = smoother.iloc[:, 0].interpolate(method="linear")
+    smoother.iloc[:, 2] = smoother.iloc[:, 1].interpolate(method="linear")
+    return smoother.max(axis=1).loc[smoother.iloc[:, 1].dropna().index]
 
 
 def smooth_lower_bound(b, smoothfreq="1D"):
     smoother = shift_series_forward_backward(b, freqstr=smoothfreq)
-    return smoother.min(axis=1)
+    smoother.iloc[:, 0] = smoother.iloc[:, 0].interpolate(method="linear")
+    smoother.iloc[:, 2] = smoother.iloc[:, 2].interpolate(method="linear")
+    return smoother.min(axis=1).loc[smoother.iloc[:, 1].dropna().index]
