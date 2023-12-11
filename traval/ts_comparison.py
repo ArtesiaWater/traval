@@ -150,14 +150,16 @@ class SeriesComparison:
             if len(series.columns) == 2:
                 return series.iloc[:, 0], series.iloc[:, 1]
             elif len(series.columns) == 1:
-                return series.iloc[:, 0], pd.Series(dtype='object')
+                return series.iloc[:, 0], pd.Series(dtype="object")
             else:
-                raise ValueError("Cannot interpret DataFrame columns. "
-                                 "Pass DataFrame with first column containing "
-                                 "values, and optional second column with "
-                                 "comments.")
+                raise ValueError(
+                    "Cannot interpret DataFrame columns. "
+                    "Pass DataFrame with first column containing "
+                    "values, and optional second column with "
+                    "comments."
+                )
         elif isinstance(series, pd.Series):
-            return series, pd.Series(dtype='object')
+            return series, pd.Series(dtype="object")
         else:
             raise TypeError("Provide pandas.Series or pandas.DataFrame!")
 
@@ -166,8 +168,9 @@ class SeriesComparison:
         nanmask1 = self.s1n.isna()
         nanmask2 = self.s2n.isna()
 
-        idxcomp_nan = DateTimeIndexComparison(self.s1n.loc[nanmask1].index,
-                                              self.s2n.loc[nanmask2].index)
+        idxcomp_nan = DateTimeIndexComparison(
+            self.s1n.loc[nanmask1].index, self.s2n.loc[nanmask2].index
+        )
 
         # weird categories NaNs in s1 but missing in s2
         self.idx_in_s1_nan = idxcomp_nan.idx_in_idx1()
@@ -190,8 +193,9 @@ class SeriesComparison:
         # add where s1 is NaN and s2 is missing to in_both_nan
         missing_nan = self.idx_in_s2_nan.difference(self.idx_in_s1)
 
-        self.idx_in_both_nan = self.idx_in_both_nan.union(
-            nan_missing).union(missing_nan)
+        self.idx_in_both_nan = self.idx_in_both_nan.union(nan_missing).union(
+            missing_nan
+        )
 
     def _compare_series_values(self):
         """Internal method for identifying different identical values.
@@ -216,13 +220,14 @@ class SeriesComparison:
             Series summarizing the series comparison, containing counts
             per category
         """
-        categories = ["in_both_identical",
-                      "in_both_different",
-                      "in_s1",
-                      "in_s2",
-                      "in_both_nan"]
-        summary = pd.Series(index=categories, name="N_obs",
-                            dtype=int)
+        categories = [
+            "in_both_identical",
+            "in_both_different",
+            "in_s1",
+            "in_s2",
+            "in_both_nan",
+        ]
+        summary = pd.Series(index=categories, name="N_obs", dtype=int)
         for cat in categories:
             summary.loc[cat] = getattr(self, "idx_" + cat).size
 
@@ -247,16 +252,16 @@ class SeriesComparison:
         if self.c2n.empty:
             raise ValueError("No comment series!")
 
-        categories = ["in_both_identical",
-                      "in_both_different",
-                      "in_s1",
-                      "in_s2",
-                      "in_both_nan"]
+        categories = [
+            "in_both_identical",
+            "in_both_different",
+            "in_s1",
+            "in_s2",
+            "in_both_nan",
+        ]
 
         unique_comments = self.c2n.unique()
-        summary = pd.DataFrame(index=categories,
-                               columns=unique_comments,
-                               dtype=int)
+        summary = pd.DataFrame(index=categories, columns=unique_comments, dtype=int)
         for cat in categories:
             cat_idx = getattr(self, "idx_" + cat)
             vc = self.c2n.reindex(cat_idx).dropna().value_counts()
@@ -282,11 +287,11 @@ class SeriesComparison:
             series containing status of value from comparison
         """
         s = pd.Series(index=self.s1n.index.union(self.s2n.index), data=np.nan)
-        s.loc[self.idx_in_both_identical] = -1.
-        s.loc[self.idx_in_both_different] = 0.
-        s.loc[self.idx_in_s1] = 1.
-        s.loc[self.idx_in_s2] = 2.
-        s.loc[self.idx_in_both_nan] = -9999.
+        s.loc[self.idx_in_both_identical] = -1.0
+        s.loc[self.idx_in_both_different] = 0.0
+        s.loc[self.idx_in_s1] = 1.0
+        s.loc[self.idx_in_s2] = 2.0
+        s.loc[self.idx_in_both_nan] = -9999.0
         return s
 
     def _check_idx_comparison(self, return_missing=False):
@@ -310,14 +315,19 @@ class SeriesComparison:
             from comparison.
         """
         seriesindexunion = self.s1.index.union(self.s2.index)
-        missing = (self.idx_in_both_nan
-                   .union(self.idx_in_both)
-                   .union(self.idx_in_s1)
-                   .union(self.idx_in_s2)
-                   .symmetric_difference(seriesindexunion))
+        missing = (
+            self.idx_in_both_nan.union(self.idx_in_both)
+            .union(self.idx_in_s1)
+            .union(self.idx_in_s2)
+            .symmetric_difference(seriesindexunion)
+        )
 
-        idxlen = (self.idx_in_both_nan.size + self.idx_in_both.size +
-                  self.idx_in_s1.size + self.idx_in_s2.size)
+        idxlen = (
+            self.idx_in_both_nan.size
+            + self.idx_in_both.size
+            + self.idx_in_s1.size
+            + self.idx_in_s2.size
+        )
 
         if return_missing:
             return missing
@@ -388,8 +398,7 @@ class SeriesComparisonRelative(SeriesComparison):
         """
 
         # Do the original comparison between s1 and s2
-        super().__init__(
-            s1, truth, diff_threshold=diff_threshold)
+        super().__init__(s1, truth, diff_threshold=diff_threshold)
 
         # With NaNs
         self.basen = base
@@ -427,23 +436,25 @@ class SeriesComparisonRelative(SeriesComparison):
 
         # the generally more unexpected differences
         # contains where all NaN and where s1 and s2 missing
-        self.idx_r_in_all_nan = self.basen.loc[nanmask].index.difference(
-            s1s2_union)
+        self.idx_r_in_all_nan = self.basen.loc[nanmask].index.difference(s1s2_union)
         # self.idx_r_in_all_nan = self.basen.loc[nanmask].index.intersection(
         #     self.idx_in_both_nan)  # only where all are NaN
         # counts for both NaNs and missing in base timeseries
-        self.idx_r_introduced_in_s1 = (self.basen.loc[nanmask].index
-                                       .intersection(only_in_s1)
-                                       .union(only_in_s1.difference(
-                                           self.basen.index)))
-        self.idx_r_introduced_in_s2 = (self.basen.loc[nanmask].index
-                                       .intersection(only_in_s2)
-                                       .union(only_in_s2.difference(
-                                           self.basen.index)))
-        self.idx_r_introduced_in_both = (self.basen.loc[nanmask].index
-                                         .intersection(s1s2_intersect)
-                                         .union(s1s2_intersect.difference(
-                                             self.basen.index)))
+        self.idx_r_introduced_in_s1 = (
+            self.basen.loc[nanmask]
+            .index.intersection(only_in_s1)
+            .union(only_in_s1.difference(self.basen.index))
+        )
+        self.idx_r_introduced_in_s2 = (
+            self.basen.loc[nanmask]
+            .index.intersection(only_in_s2)
+            .union(only_in_s2.difference(self.basen.index))
+        )
+        self.idx_r_introduced_in_both = (
+            self.basen.loc[nanmask]
+            .index.intersection(s1s2_intersect)
+            .union(s1s2_intersect.difference(self.basen.index))
+        )
 
     def _summarize_comparison_to_base(self):
         """Internal method for summarizing comparison with base timeseries.
@@ -454,16 +465,17 @@ class SeriesComparisonRelative(SeriesComparison):
             Series summarizing the series comparison relative to base
             timeseries, containing counts per category
         """
-        categories = ['kept_in_both',
-                      'flagged_in_s1',
-                      'flagged_in_s2',
-                      'flagged_in_both',
-                      'in_all_nan',
-                      'introduced_in_s1',
-                      'introduced_in_s2',
-                      'introduced_in_both']
-        summary = pd.Series(index=categories, name="N_obs",
-                            dtype=int)
+        categories = [
+            "kept_in_both",
+            "flagged_in_s1",
+            "flagged_in_s2",
+            "flagged_in_both",
+            "in_all_nan",
+            "introduced_in_s1",
+            "introduced_in_s2",
+            "introduced_in_both",
+        ]
+        summary = pd.Series(index=categories, name="N_obs", dtype=int)
         for cat in categories:
             summary.loc[cat] = getattr(self, "idx_r_" + cat).size
 
@@ -488,19 +500,19 @@ class SeriesComparisonRelative(SeriesComparison):
         if self.c2n.empty:
             raise ValueError("No comment series!")
 
-        categories = ['kept_in_both',
-                      'flagged_in_s1',
-                      'flagged_in_s2',
-                      'flagged_in_both',
-                      'in_all_nan',
-                      'introduced_in_s1',
-                      'introduced_in_s2',
-                      'introduced_in_both']
+        categories = [
+            "kept_in_both",
+            "flagged_in_s1",
+            "flagged_in_s2",
+            "flagged_in_both",
+            "in_all_nan",
+            "introduced_in_s1",
+            "introduced_in_s2",
+            "introduced_in_both",
+        ]
 
         unique_comments = self.c2n.unique()
-        summary = pd.DataFrame(index=categories,
-                               columns=unique_comments,
-                               dtype=int)
+        summary = pd.DataFrame(index=categories, columns=unique_comments, dtype=int)
         for cat in categories:
             cat_idx = getattr(self, "idx_r_" + cat)
             vc = self.c2n.reindex(cat_idx).dropna().value_counts()

@@ -133,13 +133,14 @@ class TravalParameters:
             idxnames = {"location", "rulename", "parameter"}
             missing = idxnames.difference(df.index.names)
             if len(missing) > 0:
-                raise ValueError("Parameter DataFrame index does not contain"
-                                 f"required levels/names. Expected {idxnames},"
-                                 f" got: {df.index.names}")
+                raise ValueError(
+                    "Parameter DataFrame index does not contain"
+                    f"required levels/names. Expected {idxnames},"
+                    f" got: {df.index.names}"
+                )
             return df
         else:
-            return ValueError("Parameter DataFrame type not understood: "
-                              f"{type(df)}")
+            return ValueError("Parameter DataFrame type not understood: " f"{type(df)}")
 
     @classmethod
     def from_csv(cls, csvfile):
@@ -170,7 +171,7 @@ class TravalParameters:
             elif t == "NoneType":
                 v = None
             params.loc[i, "value"] = v
-        params.drop(columns=['dtype'], inplace=True)
+        params.drop(columns=["dtype"], inplace=True)
         parameters, defaults = cls._split_df(params)
         return cls(parameters, defaults)
 
@@ -212,6 +213,7 @@ class TravalParameters:
         TravalParameters
         """
         import pickle
+
         with open(fname, "rb") as f:
             params = pickle.load(f)
         parameters, defaults = cls._split_df(params)
@@ -257,8 +259,9 @@ class TravalParameters:
         params = params.loc[:, ["value"]]
         return cls(df, params)
 
-    def get_parameters(self, rulename=None, location=None,
-                       parameter=None, squeeze=True):
+    def get_parameters(
+        self, rulename=None, location=None, parameter=None, squeeze=True
+    ):
         """Get parameter(s) by querying DataFrame.
 
         Parameters
@@ -294,8 +297,7 @@ class TravalParameters:
         elif self.parameters is not None:
             mask = self.parameters.index.get_level_values(0) == location
             if mask.sum() == 0:
-                raise KeyError(f"Location '{location}' not in parameters"
-                               " DataFrame!")
+                raise KeyError(f"Location '{location}' not in parameters" " DataFrame!")
             p = self.parameters.loc[idx[mask, :, :], :]
         else:
             raise ValueError("No location specific parameters!")
@@ -375,8 +377,7 @@ class TravalParameters:
         """
         if self.parameters is None:
             raise ValueError("No location specific parameters!")
-        self.parameters.drop(index=(location, rulename, parameter),
-                             inplace=True)
+        self.parameters.drop(index=(location, rulename, parameter), inplace=True)
 
     def delete_default_value(self, rulename, parameter):
         """Delete default parameter value.
@@ -388,8 +389,7 @@ class TravalParameters:
         parameter : str
             name of parameter
         """
-        self.parameters.drop(index=("default", rulename, parameter),
-                             inplace=True)
+        self.parameters.drop(index=("default", rulename, parameter), inplace=True)
 
     def _combine_parameter_dfs(self):
         """Concatenate default and location specific parameter DataFrames.

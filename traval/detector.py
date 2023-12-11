@@ -94,18 +94,17 @@ class Detector:
             dtype = series.dtypes.values[0]
             name = series.columns[0]
         else:
-            raise TypeError(
-                "Series must be pandas.Series or pandas.DataFrame!")
+            raise TypeError("Series must be pandas.Series or pandas.DataFrame!")
         # check dtype (of first col)
-        if not dtype in [float, np.float32]:
-            raise TypeError("Series (or first column of DataFrame) must "
-                            "have dtype float!")
+        if dtype not in [float, np.float32]:
+            raise TypeError(
+                "Series (or first column of DataFrame) must " "have dtype float!"
+            )
         return name
 
     def reset(self):
         """Reset Detector object."""
-        for attr in ["ruleset", "results",
-                     "corrections", "comparisons"]:
+        for attr in ["ruleset", "results", "corrections", "comparisons"]:
             if hasattr(self, attr):
                 delattr(self, attr)
 
@@ -158,7 +157,8 @@ class Detector:
                         self.comparisons[k] = SeriesComparison(s, base)
                     else:
                         self.comparisons[k] = SeriesComparisonRelative(
-                            s, self.truth, base)
+                            s, self.truth, base
+                        )
 
     def set_truth(self, truth):
         """Set 'truth' series.
@@ -210,8 +210,7 @@ class Detector:
         # get rule names
         rulenames = [self.ruleset.get_step_name(i) for i in steps]
 
-        df = pd.DataFrame(index=steps,
-                          columns=["rule", "TP", "FP", "FN", "TN"])
+        df = pd.DataFrame(index=steps, columns=["rule", "TP", "FP", "FN", "TN"])
         df.loc[:, "rule"] = rulenames
         base = self.results[0]
         base.name = "base series"
@@ -228,10 +227,12 @@ class Detector:
                 cp = SeriesComparisonRelative(s, truth, base)
 
                 # store stats
-                df.loc[k, ["TP", "FP", "FN", "TN"]] = (cp.bc.tp,
-                                                       cp.bc.fp,
-                                                       cp.bc.fn,
-                                                       cp.bc.tn)
+                df.loc[k, ["TP", "FP", "FN", "TN"]] = (
+                    cp.bc.tp,
+                    cp.bc.fp,
+                    cp.bc.fn,
+                    cp.bc.tn,
+                )
         return df
 
     def uniqueness(self, truth=None):
@@ -275,8 +276,7 @@ class Detector:
         # get rule names
         rulenames = [self.ruleset.get_step_name(i) for i in steps]
 
-        df = pd.DataFrame(index=steps,
-                          columns=["rule", "TP", "FP", "FN", "TN"])
+        df = pd.DataFrame(index=steps, columns=["rule", "TP", "FP", "FN", "TN"])
         df.loc[:, "rule"] = rulenames
 
         for j, k in enumerate(steps):
@@ -285,19 +285,20 @@ class Detector:
             series_list.pop(last_step)
             other_series = list(series_list.values())
             mask = unique_nans_in_series(s, *other_series)
-            s.loc[~mask & s.isna()] = -9999.  # some random non-NaN number
+            s.loc[~mask & s.isna()] = -9999.0  # some random non-NaN number
             s.name = rulenames[j]
             cp = SeriesComparisonRelative(s, truth, base)
 
             # store stats
-            df.loc[k, ["TP", "FP", "FN", "TN"]] = (cp.bc.tp,
-                                                   cp.bc.fp,
-                                                   cp.bc.fn,
-                                                   cp.bc.tn)
+            df.loc[k, ["TP", "FP", "FN", "TN"]] = (
+                cp.bc.tp,
+                cp.bc.fp,
+                cp.bc.fn,
+                cp.bc.tn,
+            )
         return df
 
     def stats_per_comment(self, step=None, truth=None):
-
         if step is None:
             step = list(self.results.keys())[-1]
         elif step < 0:
@@ -319,10 +320,10 @@ class Detector:
         stats = cp.compare_to_base_by_comment()
 
         cols = {
-            "TP": 'flagged_in_both',
-            "FP": 'flagged_in_s1',
-            "FN": 'flagged_in_s2',
-            "TN": 'kept_in_both'
+            "TP": "flagged_in_both",
+            "FP": "flagged_in_s1",
+            "FN": "flagged_in_s2",
+            "TN": "kept_in_both",
         }
         df = stats.loc[cols.values(), :].transpose()
         df.index.name = rulename
@@ -348,7 +349,6 @@ class Detector:
         return df
 
     def get_indices(self, category, step, truth=None):
-
         s = self.results[step]
         base = self.results[0]
         base.name = "base series"
@@ -367,13 +367,14 @@ class Detector:
         elif category.lower() in ["tn", "true_negatives"]:
             idx = cp.idx_r_kept_in_both
         else:
-            raise ValueError(f"Category '{category}' not recognized, must "
-                             "be one of ('tp', 'fp', 'fn', 'tn')")
+            raise ValueError(
+                f"Category '{category}' not recognized, must "
+                "be one of ('tp', 'fp', 'fn', 'tn')"
+            )
 
         return idx
 
     def get_comment_series(self, steps=None):
-
         # get list of step integers
         if isinstance(steps, int):
             if steps < 0:
@@ -390,8 +391,7 @@ class Detector:
         corr = self.get_corrections_dataframe()
 
         if corr.empty:
-            corr = pd.DataFrame(index=self.series.index,
-                                columns=rulenames, data=0.0)
+            corr = pd.DataFrame(index=self.series.index, columns=rulenames, data=0.0)
         else:
             corr = corr.loc[:, rulenames]
 
@@ -402,7 +402,8 @@ class Detector:
             comments.append(s)
 
         comments = pd.concat(comments, axis=1).apply(
-            lambda s: ",".join(s[s != ""]), axis=1)
+            lambda s: ",".join(s[s != ""]), axis=1
+        )
         comments = comments.replace(np.nan, "")
         comments.name = "comment"
 
@@ -450,16 +451,17 @@ class Detector:
             clist.append(s.fillna(-9999))
 
         # corrections are nan, 0.0 means nothing is changed
-        df = (pd.concat(clist, axis=1)
-              .isna()
-              .astype(float)
-              .replace(0.0, np.nan)
-              .replace(1.0, 0.0))
+        df = (
+            pd.concat(clist, axis=1)
+            .isna()
+            .astype(float)
+            .replace(0.0, np.nan)
+            .replace(1.0, 0.0)
+        )
         df.columns = list(self.ruleset.rules.keys())
         return df
 
     def get_corrections_comparison(self, truth=None):
-
         if truth is None and self.truth is not None:
             truth = self.truth
         else:
@@ -478,26 +480,28 @@ class Detector:
             0: "Flagged in both",
             1: "Only flagged in 'truth' series",
             2: "Only flagged in 'traval' series",
-            -9999: "NaN in both"
+            -9999: "NaN in both",
         }
         comparison = comparison.apply(lambda v: translate[v])
         comparison.name = "comparison_label"
 
-        raw_index = (comments_traval.index
-                     .union(comments_truth.index))
+        raw_index = comments_traval.index.union(comments_truth.index)
 
         truth.columns = ["truth_series", "truth_comment"]
 
         traval_series = self.get_final_result()
         traval_series.name = "traval_series"
 
-        df = pd.concat([
-            self.series.loc[raw_index.intersection(self.series.index)],
-            traval_series.loc[raw_index.intersection(traval_series.index)],
-            comments_traval,
-            truth.loc[raw_index.intersection(truth.index)],
-            comparison.loc[raw_index.intersection(comparison.index)]
-        ], axis=1)
+        df = pd.concat(
+            [
+                self.series.loc[raw_index.intersection(self.series.index)],
+                traval_series.loc[raw_index.intersection(traval_series.index)],
+                comments_traval,
+                truth.loc[raw_index.intersection(truth.index)],
+                comparison.loc[raw_index.intersection(comparison.index)],
+            ],
+            axis=1,
+        )
 
         return df
 
@@ -521,9 +525,14 @@ class Detector:
         else:
             figsize = (12, 5)
 
-        fig, axes = plt.subplots(len(self.corrections) + 1, 1,
-                                 sharex=True, sharey=True, figsize=figsize,
-                                 **kwargs)
+        fig, axes = plt.subplots(
+            len(self.corrections) + 1,
+            1,
+            sharex=True,
+            sharey=True,
+            figsize=figsize,
+            **kwargs,
+        )
 
         for iax, icol in zip(axes, resultsdf):
             iax.plot(resultsdf.index, resultsdf[icol], label=icol)
@@ -532,13 +541,17 @@ class Detector:
                 if icol != resultsdf.columns[0]:
                     corr = self.corrections[resultsdf.columns.get_loc(icol)]
                     if isinstance(corr, pd.Series):
-                        iax.plot(corr.index,
-                                 resultsdf.loc[corr.index].iloc[:, 0],
-                                 marker="x", c="C3", ls="none",
-                                 label="flagged")
+                        iax.plot(
+                            corr.index,
+                            resultsdf.loc[corr.index].iloc[:, 0],
+                            marker="x",
+                            c="C3",
+                            ls="none",
+                            label="flagged",
+                        )
 
             iax.legend(loc="upper left", ncol=2)
-            iax.grid(b=True)
+            iax.grid(True)
 
         fig.tight_layout()
         return axes
