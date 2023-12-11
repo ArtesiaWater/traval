@@ -399,7 +399,7 @@ class RuleSet:
         rs.rules.update(rules)
         return rs
 
-    def to_json(self, fname, verbose=True):
+    def to_json(self, fname=None, verbose=True):
         """Write RuleSet to disk as json file.
 
         Note that it is not possible to write custom functions to a JSON
@@ -422,17 +422,22 @@ class RuleSet:
         to_pickle : store RuleSet as pickle (supports custom functions)
         from_pickle : load RuleSet from pickle file
         """
-        msg = ("Custom functions will not be preserved when storing "
-               "RuleSet as JSON file!")
+        msg = (
+            "Custom functions will not be preserved when storing "
+            "RuleSet as JSON file!"
+        )
         warnings.warn(msg)
         rules = deepcopy(self.rules)
         rules["name"] = self.name
-        if not fname.endswith(".json"):
-            raise ValueError("Filename requires '.json' as extension!")
-        with open(fname, "w") as f:
-            json.dump(rules, f, indent=4, cls=RuleSetEncoder)
-        if verbose:
-            print(f"RuleSet written to file: '{fname}'")
+        if fname is not None:
+            if not fname.endswith(".json"):
+                raise ValueError("Filename requires '.json' as extension!")
+            with open(fname, "w") as f:
+                json.dump(rules, f, indent=4, cls=RuleSetEncoder)
+            if verbose:
+                print(f"RuleSet written to file: '{fname}'")
+        else:
+            return json.dumps(rules, indent=4, cls=RuleSetEncoder)
 
     @classmethod
     def from_json(cls, fname):
