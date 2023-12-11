@@ -233,7 +233,12 @@ def rule_spike_detection(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
 
 
 def rule_offset_detection(
-    series, threshold=0.15, updown_diff=0.1, max_gap="7D", return_df=False
+    series,
+    threshold=0.15,
+    updown_diff=0.1,
+    max_gap="7D",
+    search_method="time",
+    return_df=False,
 ):
     """Detection rule, detect periods with an offset error.
 
@@ -255,6 +260,11 @@ def rule_offset_detection(
     max_gap : str, optional
         only considers observations within this maximum gap
         between measurements to calculate diff, by default "7D".
+    search_method : str
+        method for seeking matching opposite jumps. Options are "match" or "time".
+        Method "match" looks for the jump closest in magnitude to the current jump.
+        Method "time" looks for the next jump in time that meets the updown_diff
+        criterium.
     return_df : bool, optional
         return the dataframe containing the potential offsets,
         by default False
@@ -265,6 +275,7 @@ def rule_offset_detection(
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
     """
+    verbose = False
 
     # identify gaps and set diff value after gap to nan
     diff = diff_with_gap_awareness(series, max_gap=max_gap)
@@ -283,38 +294,69 @@ def rule_offset_detection(
     jump_df = pd.concat([sd_up, sd_down], sort=True, axis=0)
     jump_df.sort_index(inplace=True)
 
-    if (len(jump_df.index) % 2) != 0:
+    if (jump_df.index.size % 2) != 0:
         print("Warning! Uneven no. of down and up jumps found.")
 
     periods = []
     df = pd.DataFrame(columns=["start", "end", "dh1", "dh2", "diff"])
 
     j = 0
-    for i in jump_df.index:
-        if i not in periods:
-            dh = jump_df.loc[i]
-            idiff = jump_df.loc[jump_df.index.difference([i])] + dh
-            index_best_match = idiff.abs().idxmin()
-            if idiff.loc[index_best_match] <= updown_diff:
-                periods += [i, index_best_match]
-                df.loc[j] = [
-                    i,
-                    index_best_match,
-                    dh,
-                    jump_df.loc[index_best_match],
-                    idiff.loc[index_best_match],
-                ]
-                j += 1
+    if jump_df.index.size > 1:
+        for i in jump_df.index:
+            if i not in periods:
+                dh = jump_df.loc[i]
+                if search_method == "match":
+                    idiff = jump_df.loc[jump_df.index.difference(periods + [i])] + dh
+                    index_best_match = idiff.abs().idxmin()
+                    if np.abs(idiff.loc[index_best_match]) <= updown_diff:
+                        periods += [i, index_best_match]
+                        df.loc[j] = [
+                            i,
+                            index_best_match,
+                            dh,
+                            jump_df.loc[index_best_match],
+                            idiff.loc[index_best_match],
+                        ]
+                        j += 1
+                elif search_method == "time":
+                    idiff = jump_df.loc[jump_df.index.difference(periods + [i])] + dh
+                    mask = np.abs(idiff) <= updown_diff
+                    first = (
+                        jump_df.loc[jump_df.index.difference(periods + [i])]
+                        .loc[mask]
+                        .iloc[0:1]
+                    )
+                    if first.empty:
+                        if verbose:
+                            print("No matching jump found.")
+                        continue
+                    periods += [i, first.index[0]]
+                    df.loc[j] = [
+                        i,
+                        first.index[0],
+                        dh,
+                        first.iloc[0],
+                        idiff.loc[first.index[0]],
+                    ]
+                    j += 1
+    else:
+        if not jump_df.empty:
+            df.loc[j] = [
+                jump_df.index[0],
+                np.nan,
+                jump_df.iloc[0],
+                np.nan,
+                np.nan,
+            ]
+            periods = [jump_df.index[0], series.index[-1]]
 
     corrections = pd.Series(
         index=series.index, data=np.zeros(series.index.size), fastpath=True
     )
     for j in range(0, len(periods), 2):
-        corrections.loc[
-            periods[j] : periods[j + 1] - pd.Timedelta(seconds=30)
-        ] = np.nan
+        corrections.loc[periods[j] : periods[j + 1] - pd.Timedelta(seconds=30)] = np.nan
     if return_df:
-        return corrections, df
+        return corrections, df, jump_df
     else:
         return corrections
 
