@@ -25,7 +25,6 @@ class RuleSetEncoder(json.JSONEncoder):
 
 
 def ruleset_hook(obj):
-
     for key, value in obj.items():
         if str(value).startswith("func:"):
             # from rlib
@@ -33,24 +32,24 @@ def ruleset_hook(obj):
             try:
                 val = getattr(rulelib, funcname)
             except AttributeError:
-                warnings.warn(f"Could not load function {funcname} "
-                              "from `traval.rulelib`!")
+                warnings.warn(
+                    f"Could not load function {funcname} " "from `traval.rulelib`!"
+                )
                 val = funcname
             obj[key] = val
-        elif key in ['ufunc']:
+        elif key in ["ufunc"]:
             # numpy functions
             funcname = value[0].split(":")[1]
             try:
                 val = getattr(np, funcname)
             except AttributeError:
-                warnings.warn(f"Could not load function {funcname} "
-                              "from `numpy`!")
+                warnings.warn(f"Could not load function {funcname} " "from `numpy`!")
                 val = (funcname,)
             obj[key] = (val,)
         elif str(value).startswith("series:"):
             try:
                 value = value[7:]  # strip 'series:'
-                obj[key] = pd.read_json(value, typ='series', orient="split")
+                obj[key] = pd.read_json(value, typ="series", orient="split")
             except Exception:
                 obj[key] = value
             if isinstance(obj[key], pd.Series):
@@ -118,12 +117,14 @@ class RuleSet:
         """String representation of object."""
         description = f"RuleSet: '{self.name}'"
         header = "  {step:>4}: {name:<15} {apply_to:<8}".format(
-            step="step", name="name", apply_to="apply_to")
+            step="step", name="name", apply_to="apply_to"
+        )
         rows = []
         tmplt = "  {step:>4g}: {name:<15} {apply_to:>8}"
         for i, (inam, irow) in enumerate(self.rules.items()):
-            rows.append(tmplt.format(step=i + 1, name=inam[:15],
-                                     apply_to=str(irow["apply_to"])))
+            rows.append(
+                tmplt.format(step=i + 1, name=inam[:15], apply_to=str(irow["apply_to"]))
+            )
 
         return "\n".join([description, header] + rows)
 
@@ -171,8 +172,12 @@ class RuleSet:
             they must return some value based on the name of the series to
             which the RuleSet will be applied.
         """
-        self.rules[name] = {"name": name, "func": func,
-                            "apply_to": apply_to, "kwargs": kwargs}
+        self.rules[name] = {
+            "name": name,
+            "func": func,
+            "apply_to": apply_to,
+            "kwargs": kwargs,
+        }
 
     def del_rule(self, name):
         """Delete rule from RuleSet.
@@ -208,8 +213,9 @@ class RuleSet:
         """
         if name not in self.rules.keys():
             raise KeyError("No rule by that name in RuleSet!")
-        self.rules.update({name: {"name": name, "func": func,
-                                  "apply_to": apply_to, "kwargs": kwargs}})
+        self.rules.update(
+            {name: {"name": name, "func": func, "apply_to": apply_to, "kwargs": kwargs}}
+        )
 
     def get_step_name(self, istep):
         if istep > 0:
@@ -242,8 +248,13 @@ class RuleSet:
             if irule["kwargs"] is None:
                 continue
             for name, value in irule["kwargs"].items():
-                params.loc[counter, cols] = \
-                    rnam, irule["apply_to"], irule["func"], name, value
+                params.loc[counter, cols] = (
+                    rnam,
+                    irule["apply_to"],
+                    irule["func"],
+                    name,
+                    value,
+                )
                 counter += 1
         return params
 
@@ -321,8 +332,10 @@ class RuleSet:
                 d[i] = irule["func"](*collect_args, **arg_dict)
                 c[i] = np.zeros(1)
             else:
-                raise TypeError("Value of 'apply_to' must be int or tuple "
-                                f"of ints. Got '{irule['apply_to']}'")
+                raise TypeError(
+                    "Value of 'apply_to' must be int or tuple "
+                    f"of ints. Got '{irule['apply_to']}'"
+                )
         return d, c
 
     def get_rule(self, istep=None, stepname=None):
@@ -365,6 +378,7 @@ class RuleSet:
         from_json : load RuleSet from json file
         """
         import pickle
+
         rules = deepcopy(self.rules)
         rules["name"] = self.name
         with open(fname, "wb") as f:
@@ -393,6 +407,7 @@ class RuleSet:
         from_json : load RuleSet from json file
         """
         import pickle
+
         with open(fname, "rb") as f:
             rules = pickle.load(f)
         rs = cls(name=rules.pop("name"))
@@ -471,6 +486,5 @@ class RuleSet:
         name = data.pop("name")
         rset = cls(name=name)
         for k, v in data.items():
-            rset.add_rule(k, v['func'], apply_to=v['apply_to'],
-                          kwargs=v["kwargs"])
+            rset.add_rule(k, v["func"], apply_to=v["apply_to"], kwargs=v["kwargs"])
         return rset

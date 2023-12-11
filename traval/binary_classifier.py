@@ -64,8 +64,9 @@ class BinaryClassifier:
         n_false_positives = comparison.idx_r_flagged_in_s1.size  # false alarm
         n_true_negatives = comparison.idx_r_kept_in_both.size  # correct rejections
         n_false_negatives = comparison.idx_r_flagged_in_s2.size  # miss
-        return cls(n_true_positives, n_false_positives,
-                   n_true_negatives, n_false_negatives)
+        return cls(
+            n_true_positives, n_false_positives, n_true_negatives, n_false_negatives
+        )
 
     @classmethod
     def from_confusion_matrix(cls, cmat):
@@ -97,8 +98,7 @@ class BinaryClassifier:
         elif isinstance(cmat, np.ndarray):
             [tp, fn], [fp, tn] = cmat
         else:
-            raise TypeError("Cannot parse confusion matrix of type: "
-                            f"{type(cmat)}")
+            raise TypeError("Cannot parse confusion matrix of type: " f"{type(cmat)}")
         return cls(tp, fp, tn, fn)
 
     def __add__(self, other):
@@ -172,12 +172,9 @@ class BinaryClassifier:
             return data
         else:
             # create columns and index
-            columns = pd.MultiIndex.from_product([["Algorithm"],
-                                                  ["error", "correct"]])
-            index = pd.MultiIndex.from_product([['"Truth"'],
-                                                ["error", "correct"]])
-            cmat = pd.DataFrame(
-                index=index, columns=columns, data=data, dtype=int)
+            columns = pd.MultiIndex.from_product([["Algorithm"], ["error", "correct"]])
+            index = pd.MultiIndex.from_product([['"Truth"'], ["error", "correct"]])
+            cmat = pd.DataFrame(index=index, columns=columns, data=data, dtype=int)
             return cmat
 
     @property
@@ -201,10 +198,15 @@ class BinaryClassifier:
         """
         # avoid warning when dividing by 0,
         # returns NaN which is what we want
-        with np.errstate(invalid='ignore'):
-            phi = ((self.tp * self.tn - self.fp * self.fn) /
-                   np.sqrt(float((self.tp + self.fp) * (self.tp + self.fn) *
-                                 (self.tn + self.fp) * (self.tn + self.fn))))
+        with np.errstate(invalid="ignore"):
+            phi = (self.tp * self.tn - self.fp * self.fn) / np.sqrt(
+                float(
+                    (self.tp + self.fp)
+                    * (self.tp + self.fn)
+                    * (self.tn + self.fp)
+                    * (self.tn + self.fn)
+                )
+            )
         return phi
 
     @property
@@ -328,7 +330,7 @@ class BinaryClassifier:
 
             informedness = specificity + sensitivity - 1.
         """
-        return self.specificity + self.sensitivity - 1.
+        return self.specificity + self.sensitivity - 1.0
 
     @property
     def accuracy(self):

@@ -71,9 +71,7 @@ def rule_max_gradient(series, max_step=0.5, max_timestep="1D"):
     """
     conversion = pd.Timedelta(max_timestep) / pd.Timedelta("1S")
     grad = (
-        series.diff()
-        / series.index.to_series().diff().dt.total_seconds()
-        * conversion
+        series.diff() / series.index.to_series().diff().dt.total_seconds() * conversion
     )
     mask = grad.abs() > max_step
     return mask_corrections_as_nan(series, mask)
@@ -111,9 +109,7 @@ def rule_ufunc_threshold(series, ufunc, threshold, offset=0.0):
     """
     ufunc = ufunc[0]
     if isinstance(threshold, pd.Series):
-        full_threshold_series = resample_short_series_to_long_series(
-            threshold, series
-        )
+        full_threshold_series = resample_short_series_to_long_series(threshold, series)
         mask = ufunc(series, full_threshold_series.add(offset))
     else:
         mask = ufunc(series, threshold + offset)
@@ -655,9 +651,7 @@ def rule_shift_to_manual_obs(
     """
     # check if time between manual obs and sensor obs
     # are further apart than max_dt:
-    nearest = hseries.index.map(
-        lambda t: series.index.get_loc(t, method="nearest")
-    )
+    nearest = hseries.index.map(lambda t: series.index.get_loc(t, method="nearest"))
     mask = np.abs((series.index[nearest] - hseries.index).total_seconds()) <= (
         pd.Timedelta(max_dt) / pd.Timedelta("1S")
     )
@@ -682,9 +676,7 @@ def rule_shift_to_manual_obs(
     # interpolate w/ method
     if method == "linear":
         diff_full_index = (
-            diff.reindex(
-                series.index.join(diff.index, how="outer"), method=None
-            )
+            diff.reindex(series.index.join(diff.index, how="outer"), method=None)
             .interpolate(method="linear")
             .fillna(0.0)
         )

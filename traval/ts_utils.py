@@ -132,15 +132,9 @@ def spike_finder(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
     # Mask spikes to only include large ones
     # use spike moments from above and check whether
     # jump in head is larger than threshold.
-    upspikes = (
-        diff.loc[spike_up.dropna().index]
-        .where(lambda s: s > threshold)
-        .dropna()
-    )
+    upspikes = diff.loc[spike_up.dropna().index].where(lambda s: s > threshold).dropna()
     downspikes = (
-        diff.loc[spike_down.dropna().index]
-        .where(lambda s: s < -threshold)
-        .dropna()
+        diff.loc[spike_down.dropna().index].where(lambda s: s < -threshold).dropna()
     )
     return upspikes, downspikes
 
@@ -255,9 +249,7 @@ def create_synthetic_raw_timeseries(raw_series, truth_series, comments):
 
     # create synthetic raw series
     synth_raw = truth_series.loc[idx_in_both].copy()
-    synth_raw.loc[mask_comments] = raw_series.loc[idx_in_both].loc[
-        mask_comments
-    ]
+    synth_raw.loc[mask_comments] = raw_series.loc[idx_in_both].loc[mask_comments]
 
     return synth_raw
 
