@@ -77,6 +77,16 @@ def rule_max_gradient(series, max_step=0.5, max_timestep="1D"):
     return mask_corrections_as_nan(series, mask)
 
 
+def rule_hardmax(series, threshold, offset):
+    """Detection rule, flag values greater than threshold value."""
+    return rule_ufunc_threshold(series, (np.greater,), threshold, offset=offset)
+
+
+def rule_hardmin(series, threshold, offset):
+    """Detection rule, flag values lower than threshold value."""
+    return rule_ufunc_threshold(series, (np.less,), threshold, offset=offset)
+
+
 def rule_ufunc_threshold(series, ufunc, threshold, offset=0.0):
     """Detection rule, flag values based on operator and threshold value.
 
