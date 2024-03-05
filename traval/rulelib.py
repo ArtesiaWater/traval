@@ -391,7 +391,7 @@ def rule_outside_n_sigma(series, n=2.0):
     return mask_corrections_as_nan(series, mask)
 
 
-def rule_diff_outside_of_n_sigma(series, n, max_gap="7D"):
+def rule_diff_outside_of_n_sigma(series, n=2.0, max_gap="7D"):
     """Detection rule, calculate diff of series and identify suspect.
 
     observations based on values outside of n * standard deviation of the
