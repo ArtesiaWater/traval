@@ -240,19 +240,21 @@ class RuleSet:
         rdf.index.name = "step"
         return rdf
 
-    def get_parameters(self):
+    def get_parameters(self, name=None):
         cols = ["rulename", "step", "func", "parameter", "value"]
         params = pd.DataFrame(columns=cols)
         counter = 0
         for rnam, irule in self.rules.items():
             if irule["kwargs"] is None:
                 continue
-            for name, value in irule["kwargs"].items():
+            for rule, value in irule["kwargs"].items():
+                if callable(value) and name is not None:
+                    value = value(name)
                 params.loc[counter, cols] = (
                     rnam,
                     irule["apply_to"],
                     irule["func"],
-                    name,
+                    rule,
                     value,
                 )
                 counter += 1
