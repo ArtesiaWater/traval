@@ -6,12 +6,18 @@ from traval import RuleSet, TravalParameters, rulelib
 
 def get_ruleset1():
     rset = RuleSet("tester1")
-    rset.add_rule("gt10", rulelib.rule_ufunc_threshold,
-                  apply_to=0, kwargs={"ufunc": (np.greater,),
-                                      "threshold": 10.0})
-    rset.add_rule("lt0", rulelib.rule_ufunc_threshold,
-                  apply_to=0, kwargs={"ufunc": (np.less,),
-                                      "threshold": 0.0})
+    rset.add_rule(
+        "gt10",
+        rulelib.rule_ufunc_threshold,
+        apply_to=0,
+        kwargs={"ufunc": (np.greater,), "threshold": 10.0},
+    )
+    rset.add_rule(
+        "lt0",
+        rulelib.rule_ufunc_threshold,
+        apply_to=0,
+        kwargs={"ufunc": (np.less,), "threshold": 0.0},
+    )
     return rset
 
 
@@ -29,12 +35,17 @@ def some_callable(*args):
 
 def get_ruleset2():
     rset = RuleSet("tester2")
-    rset.add_rule("many_kwargs", func, apply_to=0, kwargs={
-        "a": "some_string",
-        "b": 1,
-        "c": 1.5,
-        "d": some_callable,
-    })
+    rset.add_rule(
+        "many_kwargs",
+        func,
+        apply_to=0,
+        kwargs={
+            "a": "some_string",
+            "b": 1,
+            "c": 1.5,
+            "d": some_callable,
+        },
+    )
     return rset
 
 
@@ -74,8 +85,9 @@ def test_tp_get_parameters_location_specific():
     _ = tp.get_parameters(location="loc1")  # return all for location
     # return loc params for rule
     _ = tp.get_parameters(location="loc1", rulename="gt10")
-    p4 = tp.get_parameters(location="loc1", rulename="gt10",
-                           parameter="threshold")  # value
+    p4 = tp.get_parameters(
+        location="loc1", rulename="gt10", parameter="threshold"
+    )  # value
     assert isinstance(p4, float)
     try:
         tp.get_parameters(location="non-existent-loc")
@@ -83,8 +95,9 @@ def test_tp_get_parameters_location_specific():
         pass
 
     try:
-        tp.get_parameters(location="loc1", rulename="gt10",
-                          parameter="non-existent-param")
+        tp.get_parameters(
+            location="loc1", rulename="gt10", parameter="non-existent-param"
+        )
     except KeyError:
         pass
     return
@@ -97,10 +110,8 @@ def test_tp_to_from_csv():
     tp2 = TravalParameters.from_csv("test.csv")
     os.remove("test.csv")
     mask = tp.defaults["value"].apply(lambda s: tp._test_callable(s))
-    assert (tp.defaults.loc[~mask].index ==
-            tp2.defaults.index).all()
-    assert (tp.defaults.loc[~mask, "value"] ==
-            tp2.defaults.loc[~mask, "value"]).all()
+    assert (tp.defaults.loc[~mask].index == tp2.defaults.index).all()
+    assert (tp.defaults.loc[~mask, "value"] == tp2.defaults.loc[~mask, "value"]).all()
     return
 
 
@@ -112,8 +123,7 @@ def test_tp_to_from_json():
     os.remove("test.json")
     mask = tp.defaults["value"].apply(lambda s: tp._test_callable(s))
     assert (tp.defaults.loc[~mask].index == tp2.defaults.index).all()
-    assert (tp.defaults.loc[~mask, "value"] ==
-            tp2.defaults.loc[~mask, "value"]).all()
+    assert (tp.defaults.loc[~mask, "value"] == tp2.defaults.loc[~mask, "value"]).all()
     return
 
 

@@ -21,7 +21,8 @@ def test_series_comparison_plot():
     sc = SeriesComparison(s1, s2)
 
     ax = sc.plots.plot_series_comparison(
-        mark_different=True, mark_identical=True, mark_unique=True)
+        mark_different=True, mark_identical=True, mark_unique=True
+    )
     return ax
 
 
@@ -43,7 +44,7 @@ def test_relative_series_comparison_plot():
     scr = SeriesComparisonRelative(s1, s2, b)
 
     ax = scr.plots.plot_relative_comparison(
-        mark_unique=True, mark_different=True,
-        mark_identical=True, mark_introduced=True)
+        mark_unique=True, mark_different=True, mark_identical=True, mark_introduced=True
+    )
 
     return ax
