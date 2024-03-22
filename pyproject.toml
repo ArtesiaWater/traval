@@ -43,6 +43,7 @@ documentation = "https://traval.readthedocs.io/en/latest/"
 
 [project.optional-dependencies]
 ci = [
+    "pastas",
     "flake8",
     "pytest",
     "codecov",
