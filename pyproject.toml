@@ -51,7 +51,14 @@ ci = [
     "pytest-dependency",
     "codacy-coverage",
 ]
-docs = ["sphinx_rtd_theme", "Ipython", "ipykernel", "nbsphinx", "nbsphinx_link"]
+docs = [
+    "traval[ci]",
+    "sphinx_rtd_theme",
+    "Ipython",
+    "ipykernel",
+    "nbsphinx",
+    "nbsphinx_link",
+]
 
 [tool.setuptools]
 packages = ["traval"]
