@@ -143,10 +143,7 @@ def test_rule_funcdict_to_nan():
     # rule_funcdict_to_nan
     date_range = pd.date_range("2020-01-01", freq="D", periods=10)
     s1 = pd.Series(index=date_range, data=np.arange(10))
-    fdict = {
-        "lt_3": lambda s: s < 3.0,
-        "gt_7": lambda s: s > 7.0
-    }
+    fdict = {"lt_3": lambda s: s < 3.0, "gt_7": lambda s: s > 7.0}
     c12 = rlib.rule_funcdict_to_nan(s1, fdict)
     assert c12.iloc[[0, 1, 2, -2, -1]].isna().sum() == 5
     return c12

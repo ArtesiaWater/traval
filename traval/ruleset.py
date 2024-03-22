@@ -5,6 +5,8 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+import pastas as ps
+from pastas.io.pas import PastasEncoder, pastas_hook
 
 from . import rulelib
 
@@ -20,12 +22,15 @@ class RuleSetEncoder(json.JSONEncoder):
             return "dataframe:" + o.to_json(orient="index")
         elif pd.isna(o):
             return None
+        elif isinstance(o, ps.Model):
+            return "pastas.model:" + json.dumps(
+                o.to_dict(), cls=PastasEncoder, indent=4
+            )
         else:
             return super(RuleSetEncoder, self).default(o)
 
 
 def ruleset_hook(obj):
-
     for key, value in obj.items():
         if str(value).startswith("func:"):
             # from rlib
@@ -33,24 +38,24 @@ def ruleset_hook(obj):
             try:
                 val = getattr(rulelib, funcname)
             except AttributeError:
-                warnings.warn(f"Could not load function {funcname} "
-                              "from `traval.rulelib`!")
+                warnings.warn(
+                    f"Could not load function {funcname} " "from `traval.rulelib`!"
+                )
                 val = funcname
             obj[key] = val
-        elif key in ['ufunc']:
+        elif key in ["ufunc"]:
             # numpy functions
             funcname = value[0].split(":")[1]
             try:
                 val = getattr(np, funcname)
             except AttributeError:
-                warnings.warn(f"Could not load function {funcname} "
-                              "from `numpy`!")
+                warnings.warn(f"Could not load function {funcname} " "from `numpy`!")
                 val = (funcname,)
             obj[key] = (val,)
         elif str(value).startswith("series:"):
             try:
                 value = value[7:]  # strip 'series:'
-                obj[key] = pd.read_json(value, typ='series', orient="split")
+                obj[key] = pd.read_json(value, typ="series", orient="split")
             except Exception:
                 obj[key] = value
             if isinstance(obj[key], pd.Series):
@@ -61,6 +66,10 @@ def ruleset_hook(obj):
             value = json.loads(value, object_pairs_hook=OrderedDict)
             df = pd.DataFrame(data=value, columns=value.keys()).T
             obj[key] = df.apply(pd.to_numeric, errors="ignore")
+        elif str(value).startswith("pastas.model:"):
+            value = value[13:]
+            mdict = json.load(value, object_hook=pastas_hook)
+            obj[key] = ps.io.base.load_model(mdict)
         else:
             try:
                 obj[key] = json.loads(value, object_hook=ruleset_hook)
@@ -118,12 +127,14 @@ class RuleSet:
         """String representation of object."""
         description = f"RuleSet: '{self.name}'"
         header = "  {step:>4}: {name:<15} {apply_to:<8}".format(
-            step="step", name="name", apply_to="apply_to")
+            step="step", name="name", apply_to="apply_to"
+        )
         rows = []
         tmplt = "  {step:>4g}: {name:<15} {apply_to:>8}"
         for i, (inam, irow) in enumerate(self.rules.items()):
-            rows.append(tmplt.format(step=i + 1, name=inam[:15],
-                                     apply_to=str(irow["apply_to"])))
+            rows.append(
+                tmplt.format(step=i + 1, name=inam[:15], apply_to=str(irow["apply_to"]))
+            )
 
         return "\n".join([description, header] + rows)
 
@@ -171,8 +182,12 @@ class RuleSet:
             they must return some value based on the name of the series to
             which the RuleSet will be applied.
         """
-        self.rules[name] = {"name": name, "func": func,
-                            "apply_to": apply_to, "kwargs": kwargs}
+        self.rules[name] = {
+            "name": name,
+            "func": func,
+            "apply_to": apply_to,
+            "kwargs": kwargs,
+        }
 
     def del_rule(self, name):
         """Delete rule from RuleSet.
@@ -208,8 +223,9 @@ class RuleSet:
         """
         if name not in self.rules.keys():
             raise KeyError("No rule by that name in RuleSet!")
-        self.rules.update({name: {"name": name, "func": func,
-                                  "apply_to": apply_to, "kwargs": kwargs}})
+        self.rules.update(
+            {name: {"name": name, "func": func, "apply_to": apply_to, "kwargs": kwargs}}
+        )
 
     def get_step_name(self, istep):
         if istep > 0:
@@ -234,16 +250,23 @@ class RuleSet:
         rdf.index.name = "step"
         return rdf
 
-    def get_parameters(self):
+    def get_parameters(self, name=None):
         cols = ["rulename", "step", "func", "parameter", "value"]
         params = pd.DataFrame(columns=cols)
         counter = 0
         for rnam, irule in self.rules.items():
             if irule["kwargs"] is None:
                 continue
-            for name, value in irule["kwargs"].items():
-                params.loc[counter, cols] = \
-                    rnam, irule["apply_to"], irule["func"], name, value
+            for rule, value in irule["kwargs"].items():
+                if callable(value) and name is not None:
+                    value = value(name)
+                params.loc[counter, cols] = (
+                    rnam,
+                    irule["apply_to"],
+                    irule["func"],
+                    rule,
+                    value,
+                )
                 counter += 1
         return params
 
@@ -321,8 +344,10 @@ class RuleSet:
                 d[i] = irule["func"](*collect_args, **arg_dict)
                 c[i] = np.zeros(1)
             else:
-                raise TypeError("Value of 'apply_to' must be int or tuple "
-                                f"of ints. Got '{irule['apply_to']}'")
+                raise TypeError(
+                    "Value of 'apply_to' must be int or tuple "
+                    f"of ints. Got '{irule['apply_to']}'"
+                )
         return d, c
 
     def get_rule(self, istep=None, stepname=None):
@@ -365,6 +390,7 @@ class RuleSet:
         from_json : load RuleSet from json file
         """
         import pickle
+
         rules = deepcopy(self.rules)
         rules["name"] = self.name
         with open(fname, "wb") as f:
@@ -393,13 +419,14 @@ class RuleSet:
         from_json : load RuleSet from json file
         """
         import pickle
+
         with open(fname, "rb") as f:
             rules = pickle.load(f)
         rs = cls(name=rules.pop("name"))
         rs.rules.update(rules)
         return rs
 
-    def to_json(self, fname, verbose=True):
+    def to_json(self, fname=None, verbose=True):
         """Write RuleSet to disk as json file.
 
         Note that it is not possible to write custom functions to a JSON
@@ -422,17 +449,22 @@ class RuleSet:
         to_pickle : store RuleSet as pickle (supports custom functions)
         from_pickle : load RuleSet from pickle file
         """
-        msg = ("Custom functions will not be preserved when storing "
-               "RuleSet as JSON file!")
+        msg = (
+            "Custom functions will not be preserved when storing "
+            "RuleSet as JSON file!"
+        )
         warnings.warn(msg)
         rules = deepcopy(self.rules)
         rules["name"] = self.name
-        if not fname.endswith(".json"):
-            raise ValueError("Filename requires '.json' as extension!")
-        with open(fname, "w") as f:
-            json.dump(rules, f, indent=4, cls=RuleSetEncoder)
-        if verbose:
-            print(f"RuleSet written to file: '{fname}'")
+        if fname is not None:
+            if not fname.endswith(".json"):
+                raise ValueError("Filename requires '.json' as extension!")
+            with open(fname, "w") as f:
+                json.dump(rules, f, indent=4, cls=RuleSetEncoder)
+            if verbose:
+                print(f"RuleSet written to file: '{fname}'")
+        else:
+            return json.dumps(rules, indent=4, cls=RuleSetEncoder)
 
     @classmethod
     def from_json(cls, fname):
@@ -466,6 +498,31 @@ class RuleSet:
         name = data.pop("name")
         rset = cls(name=name)
         for k, v in data.items():
-            rset.add_rule(k, v['func'], apply_to=v['apply_to'],
-                          kwargs=v["kwargs"])
+            rset.add_rule(k, v["func"], apply_to=v["apply_to"], kwargs=v["kwargs"])
+        return rset
+
+    def get_resolved_ruleset(self, name):
+        """Get ruleset for a specific time series.
+
+        Retrieves the result of all functions that obtain parameters based on the
+        name of the time series.
+
+        Parameters
+        ----------
+        name : str
+            name of the time series
+
+        Returns
+        -------
+        RuleSet
+            new copy of ruleset with parameters for a specific time series
+        """
+        new_ruleset = deepcopy(self.rules)
+        for rule in new_ruleset.values():
+            rule["kwargs"] = self._parse_kwargs(rule["kwargs"], name=name)
+        
+        # create new object with resolved parameters
+        rset = RuleSet(name)
+        rset.rules = new_ruleset
+        
         return rset

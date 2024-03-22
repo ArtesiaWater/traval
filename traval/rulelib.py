@@ -71,12 +71,20 @@ def rule_max_gradient(series, max_step=0.5, max_timestep="1D"):
     """
     conversion = pd.Timedelta(max_timestep) / pd.Timedelta("1S")
     grad = (
-        series.diff()
-        / series.index.to_series().diff().dt.total_seconds()
-        * conversion
+        series.diff() / series.index.to_series().diff().dt.total_seconds() * conversion
     )
     mask = grad.abs() > max_step
     return mask_corrections_as_nan(series, mask)
+
+
+def rule_hardmax(series, threshold, offset):
+    """Detection rule, flag values greater than threshold value."""
+    return rule_ufunc_threshold(series, (np.greater,), threshold, offset=offset)
+
+
+def rule_hardmin(series, threshold, offset):
+    """Detection rule, flag values lower than threshold value."""
+    return rule_ufunc_threshold(series, (np.less,), threshold, offset=offset)
 
 
 def rule_ufunc_threshold(series, ufunc, threshold, offset=0.0):
@@ -111,9 +119,7 @@ def rule_ufunc_threshold(series, ufunc, threshold, offset=0.0):
     """
     ufunc = ufunc[0]
     if isinstance(threshold, pd.Series):
-        full_threshold_series = resample_short_series_to_long_series(
-            threshold, series
-        )
+        full_threshold_series = resample_short_series_to_long_series(threshold, series)
         mask = ufunc(series, full_threshold_series.add(offset))
     else:
         mask = ufunc(series, threshold + offset)
@@ -233,7 +239,12 @@ def rule_spike_detection(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
 
 
 def rule_offset_detection(
-    series, threshold=0.15, updown_diff=0.1, max_gap="7D", return_df=False
+    series,
+    threshold=0.15,
+    updown_diff=0.1,
+    max_gap="7D",
+    search_method="time",
+    return_df=False,
 ):
     """Detection rule, detect periods with an offset error.
 
@@ -255,6 +266,11 @@ def rule_offset_detection(
     max_gap : str, optional
         only considers observations within this maximum gap
         between measurements to calculate diff, by default "7D".
+    search_method : str
+        method for seeking matching opposite jumps. Options are "match" or "time".
+        Method "match" looks for the jump closest in magnitude to the current jump.
+        Method "time" looks for the next jump in time that meets the updown_diff
+        criterium.
     return_df : bool, optional
         return the dataframe containing the potential offsets,
         by default False
@@ -265,6 +281,7 @@ def rule_offset_detection(
         a series with same index as the input timeseries containing
         corrections. Suspect values are set to np.nan.
     """
+    verbose = False
 
     # identify gaps and set diff value after gap to nan
     diff = diff_with_gap_awareness(series, max_gap=max_gap)
@@ -283,38 +300,69 @@ def rule_offset_detection(
     jump_df = pd.concat([sd_up, sd_down], sort=True, axis=0)
     jump_df.sort_index(inplace=True)
 
-    if (len(jump_df.index) % 2) != 0:
+    if (jump_df.index.size % 2) != 0:
         print("Warning! Uneven no. of down and up jumps found.")
 
     periods = []
     df = pd.DataFrame(columns=["start", "end", "dh1", "dh2", "diff"])
 
     j = 0
-    for i in jump_df.index:
-        if i not in periods:
-            dh = jump_df.loc[i]
-            idiff = jump_df.loc[jump_df.index.difference([i])] + dh
-            index_best_match = idiff.abs().idxmin()
-            if idiff.loc[index_best_match] <= updown_diff:
-                periods += [i, index_best_match]
-                df.loc[j] = [
-                    i,
-                    index_best_match,
-                    dh,
-                    jump_df.loc[index_best_match],
-                    idiff.loc[index_best_match],
-                ]
-                j += 1
+    if jump_df.index.size > 1:
+        for i in jump_df.index:
+            if i not in periods:
+                dh = jump_df.loc[i]
+                if search_method == "match":
+                    idiff = jump_df.loc[jump_df.index.difference(periods + [i])] + dh
+                    index_best_match = idiff.abs().idxmin()
+                    if np.abs(idiff.loc[index_best_match]) <= updown_diff:
+                        periods += [i, index_best_match]
+                        df.loc[j] = [
+                            i,
+                            index_best_match,
+                            dh,
+                            jump_df.loc[index_best_match],
+                            idiff.loc[index_best_match],
+                        ]
+                        j += 1
+                elif search_method == "time":
+                    idiff = jump_df.loc[jump_df.index.difference(periods + [i])] + dh
+                    mask = np.abs(idiff) <= updown_diff
+                    first = (
+                        jump_df.loc[jump_df.index.difference(periods + [i])]
+                        .loc[mask]
+                        .iloc[0:1]
+                    )
+                    if first.empty:
+                        if verbose:
+                            print("No matching jump found.")
+                        continue
+                    periods += [i, first.index[0]]
+                    df.loc[j] = [
+                        i,
+                        first.index[0],
+                        dh,
+                        first.iloc[0],
+                        idiff.loc[first.index[0]],
+                    ]
+                    j += 1
+    else:
+        if not jump_df.empty:
+            df.loc[j] = [
+                jump_df.index[0],
+                np.nan,
+                jump_df.iloc[0],
+                np.nan,
+                np.nan,
+            ]
+            periods = [jump_df.index[0], series.index[-1]]
 
     corrections = pd.Series(
         index=series.index, data=np.zeros(series.index.size), fastpath=True
     )
     for j in range(0, len(periods), 2):
-        corrections.loc[
-            periods[j] : periods[j + 1] - pd.Timedelta(seconds=30)
-        ] = np.nan
+        corrections.loc[periods[j] : periods[j + 1] - pd.Timedelta(seconds=30)] = np.nan
     if return_df:
-        return corrections, df
+        return corrections, df, jump_df
     else:
         return corrections
 
@@ -343,7 +391,7 @@ def rule_outside_n_sigma(series, n=2.0):
     return mask_corrections_as_nan(series, mask)
 
 
-def rule_diff_outside_of_n_sigma(series, n, max_gap="7D"):
+def rule_diff_outside_of_n_sigma(series, n=2.0, max_gap="7D"):
     """Detection rule, calculate diff of series and identify suspect.
 
     observations based on values outside of n * standard deviation of the
@@ -613,9 +661,8 @@ def rule_shift_to_manual_obs(
     """
     # check if time between manual obs and sensor obs
     # are further apart than max_dt:
-    nearest = hseries.index.map(
-        lambda t: series.index.get_loc(t, method="nearest")
-    )
+    # nearest = hseries.index.map(lambda t: series.index[series.index.get_indexer([t], method="nearest")])
+    nearest = series.index.get_indexer(hseries.index, method="nearest")
     mask = np.abs((series.index[nearest] - hseries.index).total_seconds()) <= (
         pd.Timedelta(max_dt) / pd.Timedelta("1S")
     )
@@ -640,9 +687,7 @@ def rule_shift_to_manual_obs(
     # interpolate w/ method
     if method == "linear":
         diff_full_index = (
-            diff.reindex(
-                series.index.join(diff.index, how="outer"), method=None
-            )
+            diff.reindex(series.index.join(diff.index, how="outer"), method=None)
             .interpolate(method="linear")
             .fillna(0.0)
         )

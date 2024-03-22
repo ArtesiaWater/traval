@@ -1,0 +1,68 @@
+[build-system]
+# Minimum requirements for the build system to execute
+requires = ["setuptools>64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "traval"
+dynamic = ["version"]
+description = "Python package for applying automatic error detection algorithms to timeseries. Create custom error detection algorithms to support data validation workflows."
+license = { file = "LICENSE" }
+readme = "readme.md"
+authors = [{ name = "D.A. Brakenhoff" }]
+maintainers = [
+    { name = "D.A. Brakenhoff", email = "d.brakenhoff@artesia-water.nl" },
+]
+requires-python = ">= 3.9"
+dependencies = ["numpy", "scipy", "pandas", "matplotlib"]
+
+keywords = ["hydrology", "groundwater", "time series", "analysis", "database"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Other Audience",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Hydrology",
+]
+
+[project.urls]
+homepage = "https://github.com/ArtesiaWater/traval"
+repository = "https://github.com/ArtesiaWater/traval"
+documentation = "https://traval.readthedocs.io/en/latest/"
+
+[project.optional-dependencies]
+ci = [
+    "pastas",
+    "flake8",
+    "pytest",
+    "codecov",
+    "pytest-cov",
+    "pytest-dependency",
+    "codacy-coverage",
+]
+docs = ["sphinx_rtd_theme", "Ipython", "ipykernel", "nbsphinx", "nbsphinx_link"]
+
+[tool.setuptools]
+packages = ["traval"]
+
+[tool.setuptools.dynamic]
+version = { attr = "traval.version.__version__" }
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+src_paths = ["traval"]
+line_length = 88

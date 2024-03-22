@@ -1,3 +1,4 @@
+# ruff : noqa
 from . import plots, rulelib, ts_utils
 from .binary_classifier import BinaryClassifier
 from .detector import Detector
