@@ -5,6 +5,8 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+import pastas as ps
+from pastas.io.pas import PastasEncoder, pastas_hook
 
 from . import rulelib
 
@@ -20,6 +22,10 @@ class RuleSetEncoder(json.JSONEncoder):
             return "dataframe:" + o.to_json(orient="index")
         elif pd.isna(o):
             return None
+        elif isinstance(o, ps.Model):
+            return "pastas.model:" + json.dumps(
+                o.to_dict(), cls=PastasEncoder, indent=4
+            )
         else:
             return super(RuleSetEncoder, self).default(o)
 
@@ -60,6 +66,10 @@ def ruleset_hook(obj):
             value = json.loads(value, object_pairs_hook=OrderedDict)
             df = pd.DataFrame(data=value, columns=value.keys()).T
             obj[key] = df.apply(pd.to_numeric, errors="ignore")
+        elif str(value).startswith("pastas.model:"):
+            value = value[13:]
+            mdict = json.load(value, object_hook=pastas_hook)
+            obj[key] = ps.io.base.load_model(mdict)
         else:
             try:
                 obj[key] = json.loads(value, object_hook=ruleset_hook)
@@ -489,4 +499,30 @@ class RuleSet:
         rset = cls(name=name)
         for k, v in data.items():
             rset.add_rule(k, v["func"], apply_to=v["apply_to"], kwargs=v["kwargs"])
+        return rset
+
+    def get_resolved_ruleset(self, name):
+        """Get ruleset for a specific time series.
+
+        Retrieves the result of all functions that obtain parameters based on the
+        name of the time series.
+
+        Parameters
+        ----------
+        name : str
+            name of the time series
+
+        Returns
+        -------
+        RuleSet
+            new copy of ruleset with parameters for a specific time series
+        """
+        new_ruleset = deepcopy(self.rules)
+        for rule in new_ruleset.values():
+            rule["kwargs"] = self._parse_kwargs(rule["kwargs"], name=name)
+        
+        # create new object with resolved parameters
+        rset = RuleSet(name)
+        rset.rules = new_ruleset
+        
         return rset
