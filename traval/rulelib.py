@@ -506,10 +506,10 @@ def rule_pastas_outside_pi(
             series, pd.Series(index=series.index, data=False)
         )
         corrections.name = "sim"
-    # no fit
-    elif ml.fit is None:
+    # no solver
+    elif ml.solver is None:
         if verbose:
-            print("Warning: Pastas model fit attribute is None!")
+            print("Warning: Model has no attribute solver!")
         corrections = mask_corrections_as_nan(
             series, pd.Series(index=series.index, data=False)
         )
@@ -522,7 +522,7 @@ def rule_pastas_outside_pi(
             ml.settings["tmax"] = tmax
 
         # calculate prediction interval
-        pi = ml.fit.prediction_interval(alpha=(1 - ci))
+        pi = ml.solver.prediction_interval(alpha=(1 - ci))
 
         # prediction interval empty
         if pi.empty:
@@ -571,10 +571,10 @@ def rule_pastas_percentile_pi(
             series, pd.Series(index=series.index, data=False)
         )
         corrections.name = "sim"
-    # no fit
-    elif ml.fit is None:
+    # no solver
+    elif ml.solver is None:
         if verbose:
-            print("Warning: Pastas model fit attribute is None!")
+            print("Warning: Model has no solver attribute!")
         corrections = mask_corrections_as_nan(
             series, pd.Series(index=series.index, data=False)
         )
