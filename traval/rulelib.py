@@ -87,7 +87,7 @@ def rule_max_gradient(series, max_step=0.5, max_timestep="1D"):
         a series with same index as the input time series containing
         corrections. Suspect values are set to np.nan.
     """
-    conversion = pd.Timedelta(max_timestep) / pd.Timedelta("1S")
+    conversion = pd.Timedelta(max_timestep) / pd.Timedelta("1s")
     grad = (
         series.diff() / series.index.to_series().diff().dt.total_seconds() * conversion
     )
@@ -664,7 +664,7 @@ def rule_compare_to_manual_obs(
     # are further apart than max_dt:
     nearest = series.index.get_indexer(manual_obs.index, method="nearest")
     mask = np.abs((series.index[nearest] - manual_obs.index).total_seconds()) <= (
-        pd.Timedelta(max_dt) / pd.Timedelta("1S")
+        pd.Timedelta(max_dt) / pd.Timedelta("1s")
     )
 
     # interpolate raw obs to manual obs times
@@ -740,7 +740,7 @@ def rule_shift_to_manual_obs(
     # are further apart than max_dt:
     nearest = series.index.get_indexer(hseries.index, method="nearest")
     mask = np.abs((series.index[nearest] - hseries.index).total_seconds()) <= (
-        pd.Timedelta(max_dt) / pd.Timedelta("1S")
+        pd.Timedelta(max_dt) / pd.Timedelta("1s")
     )
 
     # interpolate raw obs to manual obs times
