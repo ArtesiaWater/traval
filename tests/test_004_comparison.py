@@ -1,5 +1,7 @@
+# ruff: noqa: D100 D103
 import numpy as np
 import pandas as pd
+
 import traval
 
 
@@ -12,8 +14,7 @@ def test_series_comparison():
     s2 = pd.Series(index=idx2, data=2.0)
     s2.loc["2020-04-01":"2020-04-30"] = np.nan
 
-    sc = traval.SeriesComparison(s1, s2)
-    return sc
+    _ = traval.SeriesComparison(s1, s2)
 
 
 def test_series_relative_comparison():
@@ -72,8 +73,6 @@ def test_series_relative_comparison():
     for k, v in checkresult.items():
         assert summary.loc[k] == v
 
-    return scr
-
 
 def test_relative_comparison_stats():
     base_idx = pd.date_range("2020-01-01", periods=110, freq="D")
@@ -94,9 +93,6 @@ def test_relative_comparison_stats():
 
     assert scr.bc.false_positive_rate + scr.bc.specificity == 1
     assert scr.bc.false_negative_rate + scr.bc.sensitivity == 1
-    return scr
 
-
-def test_confusion_matrix():
-    cp = test_relative_comparison_stats()
-    return cp.bc.confusion_matrix()
+    # test confusion matrix
+    scr.bc.confusion_matrix()
