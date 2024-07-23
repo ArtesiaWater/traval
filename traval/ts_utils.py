@@ -1,45 +1,214 @@
+from enum import IntEnum
+
 import numpy as np
 import pandas as pd
 
 
-def mask_corrections_as_nan(series, mask):
-    """Get corrections series with NaNs where mask == True.
+class CorrectionCode(IntEnum):
+    NO_CORRECTION = 0
+    BELOW_THRESHOLD = -2
+    NOT_EQUAL_VALUE = -1
+    EQUAL_VALUE = 1
+    ABOVE_THRESHOLD = 2
+    MODIFIED_VALUE = 4
+    UNKNOWN_COMPARISON_VALUE = 99
+
+
+def get_empty_corrections_df(series):
+    """Method to get corrections empty dataframe.
 
     Parameters
     ----------
     series : pd.Series
-        timeseries to provide corrections for
+        time series to apply corrections to
+    """
+    c = pd.DataFrame(
+        index=series.index,
+        data={
+            "correction_code": CorrectionCode.NO_CORRECTION,
+            "series_values": np.full(series.size, np.nan),
+            "comparison_values": np.full(series.size, np.nan),
+        },
+    )
+    return c
+
+
+def _mask_corrections(series, values, mask, correction_code):
+    c = get_empty_corrections_df(series)
+    c.loc[mask, "series_values"] = series
+    if values is not None:
+        if isinstance(values, pd.Series):
+            c.loc[mask, "comparison_values"] = values.loc[mask]
+        else:
+            c.loc[mask, "comparison_values"] = values
+    c.loc[mask, "correction_code"] = correction_code
+    return c
+
+
+def mask_corrections_above_below(
+    series,
+    mask_above,
+    threshold_above,
+    mask_below,
+    threshold_below,
+):
+    """Get corrections where above threshold.
+
+    Parameters
+    ----------
+    series : pd.Series
+        time series to apply corrections to
+    threshold_above : pd.Series
+        time series with values to compare with
+    mask_above : DateTimeIndex or boolean np.array
+        DateTimeIndex containing timestamps where value should be set to NaN,
+        or boolean array with same length as series set to True where
+        value should be set to NaN. (Uses pandas .loc[mask] to set values.)
+    threshold_below : pd.Series
+        time series with values to compare with
+    mask_below : DateTimeIndex or boolean np.array
+        DateTimeIndex containing timestamps where value should be set to NaN,
+        or boolean array with same length as series set to True where
+        value should be set to NaN. (Uses pandas .loc[mask] to set values.)
+    """
+    c_above = mask_corrections_above_threshold(series, threshold_above, mask_above)
+    c_below = mask_corrections_below_threshold(series, threshold_below, mask_below)
+    return c_above.add(c_below, fill_value=0)
+
+
+def mask_corrections_above_threshold(series, threshold, mask):
+    """Get corrections where below threshold.
+
+    Parameters
+    ----------
+    series : pd.Series
+        time series to apply corrections to
+    threshold : pd.Series
+        time series with values to compare with
     mask : DateTimeIndex or boolean np.array
         DateTimeIndex containing timestamps where value should be set to NaN,
         or boolean array with same length as series set to True where
         value should be set to NaN. (Uses pandas .loc[mask] to set values.)
+    """
+    return _mask_corrections(series, threshold, mask, CorrectionCode.ABOVE_THRESHOLD)
+
+
+def mask_corrections_below_threshold(series, threshold, mask):
+    """Get corrections where below threshold.
+
+    Parameters
+    ----------
+    series : pd.Series
+        time series to apply corrections to
+    threshold : pd.Series
+        time series with values to compare with
+    mask : DateTimeIndex or boolean np.array
+        DateTimeIndex containing timestamps where value should be set to NaN,
+        or boolean array with same length as series set to True where
+        value should be set to NaN. (Uses pandas .loc[mask] to set values.)
+    """
+    return _mask_corrections(series, threshold, mask, CorrectionCode.BELOW_THRESHOLD)
+
+
+def mask_corrections_equal_value(series, values, mask):
+    """Get corrections where equal to value.
+
+    Parameters
+    ----------
+    series : pd.Series
+        time series to apply corrections to
+    values : pd.Series
+        time series with values to compare with
+    mask : DateTimeIndex or boolean np.array
+        DateTimeIndex containing timestamps where value should be set to NaN,
+        or boolean array with same length as series set to True where
+        value should be set to NaN. (Uses pandas .loc[mask] to set values.)
+    """
+    return _mask_corrections(series, values, mask, CorrectionCode.EQUAL_VALUE)
+
+
+def mask_corrections_modified_value(series, values, mask):
+    """Get corrections where value was modified.
+
+    Parameters
+    ----------
+    series : pd.Series
+        time series to apply corrections to
+    values : pd.Series
+        time series with values to compare with
+    mask : DateTimeIndex or boolean np.array
+        DateTimeIndex containing timestamps where value should be set to NaN,
+        or boolean array with same length as series set to True where
+        value should be set to NaN. (Uses pandas .loc[mask] to set values.)
+    """
+    return _mask_corrections(series, values, mask, CorrectionCode.MODIFIED_VALUE)
+
+
+def mask_corrections_not_equal_value(series, values, mask):
+    """Get corrections where not equal to value.
+
+    Parameters
+    ----------
+    series : pd.Series
+        time series to apply corrections to
+    values : pd.Series
+        time series with values to compare with
+    mask : DateTimeIndex or boolean np.array
+        DateTimeIndex containing timestamps where value should be set to NaN,
+        or boolean array with same length as series set to True where
+        value should be set to NaN. (Uses pandas .loc[mask] to set values.)
+    """
+    return _mask_corrections(series, values, mask, CorrectionCode.NOT_EQUAL_VALUE)
+
+
+def mask_corrections_no_comparison_value(series, mask):
+    """Get corrections where equal to value.
+
+    Parameters
+    ----------
+    series : pd.Series
+        time series to apply corrections to
+    mask : DateTimeIndex or boolean np.array
+        DateTimeIndex containing timestamps where value should be set to NaN,
+        or boolean array with same length as series set to True where
+        value should be set to NaN. (Uses pandas .loc[mask] to set values.)
+    """
+    return _mask_corrections(
+        series, None, mask, CorrectionCode.UNKNOWN_COMPARISON_VALUE
+    )
+
+
+def corrections_as_nan(corrections):
+    """Convert corrections series to NaNs.
+
+    Parameters
+    ----------
+    corrections : pd.DataFrame
+        corrections dataframe with correction code, series values and comparison values
 
     Returns
     -------
     c : pd.Series
-        return corrections series
+        return corrections series with nans where value is corrected
     """
-    c = pd.Series(
-        index=series.index,
-        data=np.zeros(series.index.size),
-        fastpath=True,
-        dtype=float,
-    )
-    c.loc[mask] = np.nan
+    c = pd.Series(index=corrections.index, data=0.0)
+    # set values where correction code is not NaN
+    # (meaning a correction was applied) to NaN
+    c[corrections["correction_code"] != 0] = np.nan
     return c
 
 
 def resample_short_series_to_long_series(short_series, long_series):
-    """Resample a short timeseries to index from a longer timeseries.
+    """Resample a short time series to index from a longer time series.
 
     First uses 'ffill' then 'bfill' to fill new series.
 
     Parameters
     ----------
     short_series : pd.Series
-        short timeseries
+        short time series
     long_series : pd.Series
-        long timeseries
+        long time series
 
     Returns
     -------
@@ -55,17 +224,17 @@ def resample_short_series_to_long_series(short_series, long_series):
         first_date_after = long_series.loc[mask].index[0]
         new_series.loc[first_date_after] = short_series.iloc[i]
 
-    new_series = new_series.fillna(method="ffill").fillna(method="bfill")
+    new_series = new_series.ffill().bfill()
     return new_series
 
 
 def diff_with_gap_awareness(series, max_gap="7D"):
-    """Get diff of timeseries with a limit on gap between two values.
+    """Get diff of time series with a limit on gap between two values.
 
     Parameters
     ----------
     series : pd.Series
-        timeseries to calculate diff for
+        time series to calculate diff for
     max_gap : str, optional
         maximum period between two observations for calculating diff, otherwise
         set value to NaN, by default "7D"
@@ -73,7 +242,7 @@ def diff_with_gap_awareness(series, max_gap="7D"):
     Returns
     -------
     diff : pd.Series
-        timeseries with diff, with NaNs whenever two values are farther apart
+        time series with diff, with NaNs whenever two values are farther apart
         than max_gap.
     """
     diff = series.diff()
@@ -86,20 +255,20 @@ def diff_with_gap_awareness(series, max_gap="7D"):
 
 
 def spike_finder(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
-    """Find spikes in timeseries.
+    """Find spikes in time series.
 
-    Spikes are sudden jumps in the value of a timeseries that last 1 timestep.
+    Spikes are sudden jumps in the value of a time series that last 1 timestep.
     They can be both negative or positive.
 
     Parameters
     ----------
     series : pd.Series
-        timeseries to find spikes in
+        time series to find spikes in
     threshold : float, optional
         the minimum size of the jump to qualify as a spike, by default 0.15
     spike_tol : float, optional
-        offset between value of timeseries before spike and after spike,
-        by default 0.15. After a spike, the value of the timeseries is usually
+        offset between value of time series before spike and after spike,
+        by default 0.15. After a spike, the value of the time series is usually
         close to but not identical to the value that preceded the spike. Use
         this parameter to control how close the value has to be.
     max_gap : str, optional
@@ -112,7 +281,6 @@ def spike_finder(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
         pandas DateTimeIndex objects containing timestamps of upward and
         downward spikes.
     """
-
     # identify gaps and set diff value after gap to nan
     diff = diff_with_gap_awareness(series, max_gap=max_gap)
 
@@ -140,7 +308,7 @@ def spike_finder(series, threshold=0.15, spike_tol=0.15, max_gap="7D"):
 
 
 def bandwidth_moving_avg_n_sigma(series, window, n):
-    """Calculate bandwidth around timeseries based moving average + n * std.
+    """Calculate bandwidth around time series based moving average + n * std.
 
     Parameters
     ----------
@@ -165,7 +333,7 @@ def bandwidth_moving_avg_n_sigma(series, window, n):
 
 
 def interpolate_series_to_new_index(series, new_index):
-    """Interpolate timeseries to new DateTimeIndex.
+    """Interpolate time series to new DateTimeIndex.
 
     Parameters
     ----------
@@ -202,7 +370,6 @@ def unique_nans_in_series(series, *args):
     mask : pd.Series
         mask with value True where NaN is unique to series
     """
-
     mask = series.isna()
 
     for s in args:
@@ -214,30 +381,29 @@ def unique_nans_in_series(series, *args):
     return mask
 
 
-def create_synthetic_raw_timeseries(raw_series, truth_series, comments):
-    """Create synthetic raw timeseries.
+def create_synthetic_raw_time_series(raw_series, truth_series, comments):
+    """Create synthetic raw time series.
 
     Updates 'truth_series' (where values are labelled with a comment)
     with values from raw_series. Used for removing unlabeled changes between
-    a raw and validated timeseries.
+    a raw and validated time series.
 
     Parameters
     ----------
     raw_series : pd.Series
-        timeseries with raw data
+        time series with raw data
     truth_series : pd.Series
-        timeseries with validated data
+        time series with validated data
     comments : pd.Series
-        timeseries with comments. Index must be same as 'truth_series'.
+        time series with comments. Index must be same as 'truth_series'.
         When value does not have a comment it must be an empty string: ''.
 
     Returns
     -------
     s : pd.Series
-        synthetic raw timeseries, same as truth_series but updated with
+        synthetic raw time series, same as truth_series but updated with
         raw_series where value has been commented.
     """
-
     if truth_series.index.symmetric_difference(comments.index).size > 0:
         raise ValueError("'truth_series' and 'comments' must have same index!")
 
@@ -265,7 +431,7 @@ def shift_series_forward_backward(s, freqstr="1D"):
 def smooth_upper_bound(b, smoothfreq="1D"):
     smoother = shift_series_forward_backward(b, freqstr=smoothfreq)
     smoother.iloc[:, 0] = smoother.iloc[:, 0].interpolate(method="linear")
-    smoother.iloc[:, 2] = smoother.iloc[:, 1].interpolate(method="linear")
+    smoother.iloc[:, 2] = smoother.iloc[:, 2].interpolate(method="linear")
     return smoother.max(axis=1).loc[smoother.iloc[:, 1].dropna().index]
 
 
@@ -274,3 +440,19 @@ def smooth_lower_bound(b, smoothfreq="1D"):
     smoother.iloc[:, 0] = smoother.iloc[:, 0].interpolate(method="linear")
     smoother.iloc[:, 2] = smoother.iloc[:, 2].interpolate(method="linear")
     return smoother.min(axis=1).loc[smoother.iloc[:, 1].dropna().index]
+
+
+def get_correction_status_name(corrections):
+    """Get correction status name from correction codes.
+
+    Parameters
+    ----------
+    correction_code : pd.DataFrame or pd.Series
+        dataframe or series containing corrections codes
+
+    Returns
+    -------
+    pd.DataFrame or pd.Series
+        dataframe or series filled with correction status name
+    """
+    return corrections.fillna(0).map(lambda c: CorrectionCode(c).name)
