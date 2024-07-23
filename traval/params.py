@@ -409,7 +409,7 @@ class TravalParameters:
 
     @staticmethod
     def _test_callable(f):
-        """Method to test whether parameter value is a callable.
+        """Test whether parameter value is a callable.
 
         Also returns True if callable is stored in a tuple.
 

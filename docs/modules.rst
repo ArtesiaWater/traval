@@ -25,15 +25,15 @@ Rule Library
     :members:
 
 
-Timeseries Comparison
----------------------
+Time Series Comparison
+----------------------
 
 .. automodule:: traval.ts_comparison
     :members:
 
 
-Timeseries Utilities
---------------------
+Time series Utilities
+---------------------
 
 .. automodule:: traval.ts_utils
     :members:

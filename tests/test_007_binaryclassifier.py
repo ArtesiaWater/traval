@@ -1,14 +1,15 @@
+# ruff: noqa: D100 D103
 from pandas import Series
+
 from traval import BinaryClassifier
 
 
-def test_bc():
-    bc = BinaryClassifier(9, 1, 9, 1)
-    return bc
+def get_bc():
+    return BinaryClassifier(9, 1, 9, 1)
 
 
 def test_all_stats():
-    bc = test_bc()
+    bc = get_bc()
     stats = bc.get_all_statistics()
     answer = {
         "tp": 9.0,
@@ -31,14 +32,12 @@ def test_all_stats():
         "mcc": 0.8,
     }
     assert (stats == Series(answer)).all()
-    return
 
 
 def test_add():
-    bc = test_bc()
+    bc = get_bc()
     bcsum = bc + bc
     assert bcsum.tp == 18
     assert bcsum.fp == 2
     assert bcsum.tn == 18
     assert bcsum.fn == 2
-    return

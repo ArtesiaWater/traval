@@ -53,7 +53,7 @@ class DateTimeIndexComparison:
 
 
 class SeriesComparison:
-    """Object for comparing two timeseries.
+    """Object for comparing two time series.
 
     Comparison yields the following categories:
 
@@ -77,7 +77,7 @@ class SeriesComparison:
     """
 
     def __init__(self, s1, s2, names=None, diff_threshold=0.0):
-        """Compare two timeseries.
+        """Compare two time series.
 
         Parameters
         ----------
@@ -86,7 +86,7 @@ class SeriesComparison:
         s2 : pd.Series or pd.DataFrame
             second series to compare
         names : list of str, optional
-            list of names of timeseries, by default None, which
+            list of names of time series, by default None, which
             uses series name, or dataframe column name
         diff_threshold : float, optional
             value beyond which a difference is considered significant, by
@@ -127,7 +127,7 @@ class SeriesComparison:
 
     @staticmethod
     def _parse_series(series):
-        """Internal method to parse timeseries input.
+        """Internal method to parse time series input.
 
         Parameters
         ----------
@@ -138,7 +138,7 @@ class SeriesComparison:
         Returns
         -------
         series, comments :  pd.Series, pd.Series
-            returns timeseries and comment series. Comment series is empty
+            returns time series and comment series. Comment series is empty
             series if no comments are included in input
 
         Raises
@@ -248,7 +248,6 @@ class SeriesComparison:
         ValueError
             if no comment series is found
         """
-
         if self.c2n.empty:
             raise ValueError("No comment series!")
 
@@ -339,64 +338,63 @@ class SeriesComparison:
 
 
 class SeriesComparisonRelative(SeriesComparison):
-    """Object for comparing two timeseries relative to a third timeseries.
+    """Object for comparing two time series relative to a third time series.
 
     Extends the SeriesComparison object to include a comparison between
-    two timeseries and a third base timeseries. This is used for example, when
+    two time series and a third base time series. This is used for example, when
     comparing the results of two error detection outcomes to the original
-    raw timeseries.
+    raw time series.
 
     Comparison yields both the results from SeriesComparison as well as the
-    following categories for the relative comparison to the base timeseries:
+    following categories for the relative comparison to the base time series:
 
-    -  kept_in_both: both timeseries and the base timeseries contain values
+    -  kept_in_both: both time series and the base time series contain values
     -  flagged_in_s1: value is NaN/missing in series #1
     -  flagged_in_s2: value is NaN/missing in series #2
     -  flagged_in_both: value is NaN/missing in both series #1 and series #2
-    -  in_all_nan: value is NaN in all timeseries (series #1, #2 and base)
+    -  in_all_nan: value is NaN in all time series (series #1, #2 and base)
     -  introduced_in_s1: value is NaN/missing in base but has value in series #1
     -  introduced_in_s2: value is NaN/missing in base but has value in series #2
     -  introduced_in_both: value is NaN/missing in base but has value in both
-       timeseries
+       time series
 
     Parameters
     ----------
     s1 : pd.Series or pd.DataFrame
         first series to compare
     truth : pd.Series or pd.DataFrame
-        second series to compare, if a "truth" timeseries is available
-        pass it as the second timeseries. Stored in object as 's2'.
+        second series to compare, if a "truth" time series is available
+        pass it as the second time series. Stored in object as 's2'.
     base : pd.Series or pd.DataFrame
-        timeseries to compare other two series with
+        time series to compare other two series with
     diff_threshold : float, optional
         value beyond which a difference is considered significant, by
         default 0.0. Two values whose difference is smaller than threshold
         are considered identical.
 
 
-    See also
+    See Also
     --------
-    SeriesComparison : Comparison of two timeseries relative to each other
+    SeriesComparison : Comparison of two time series relative to each other
     """
 
     def __init__(self, s1, truth, base, diff_threshold=0.0):
-        """Compare two timeseries relative to a base timeseries.
+        """Compare two time series relative to a base time series.
 
         Parameters
         ----------
         s1 : pd.Series or pd.DataFrame
             first series to compare
         truth : pd.Series or pd.DataFrame
-            second series to compare, if a "truth" timeseries is available
-            pass it as the second timeseries. Stored in object as 's2'.
+            second series to compare, if a "truth" time series is available
+            pass it as the second time series. Stored in object as 's2'.
         base : pd.Series or pd.DataFrame
-            timeseries to compare other two series with
+            time series to compare other two series with
         diff_threshold : float, optional
             value beyond which a difference is considered significant, by
             default 0.0. Two values whose difference is smaller than threshold
             are considered identical.
         """
-
         # Do the original comparison between s1 and s2
         super().__init__(s1, truth, diff_threshold=diff_threshold)
 
@@ -417,9 +415,8 @@ class SeriesComparisonRelative(SeriesComparison):
         self.bc = BinaryClassifier.from_series_comparison_relative(self)
 
     def _compare_series_to_base(self):
-        """Internal method for comparing two timseries to base timeseries."""
-
-        # where Nans in base timeseries
+        """Internal method for comparing two timseries to base time series."""
+        # where Nans in base time series
         nanmask = self.basen.isna()
 
         # prepare some indices
@@ -439,7 +436,7 @@ class SeriesComparisonRelative(SeriesComparison):
         self.idx_r_in_all_nan = self.basen.loc[nanmask].index.difference(s1s2_union)
         # self.idx_r_in_all_nan = self.basen.loc[nanmask].index.intersection(
         #     self.idx_in_both_nan)  # only where all are NaN
-        # counts for both NaNs and missing in base timeseries
+        # counts for both NaNs and missing in base time series
         self.idx_r_introduced_in_s1 = (
             self.basen.loc[nanmask]
             .index.intersection(only_in_s1)
@@ -457,13 +454,13 @@ class SeriesComparisonRelative(SeriesComparison):
         )
 
     def _summarize_comparison_to_base(self):
-        """Internal method for summarizing comparison with base timeseries.
+        """Internal method for summarizing comparison with base time series.
 
         Returns
         -------
         summary : pandas.Series
             Series summarizing the series comparison relative to base
-            timeseries, containing counts per category
+            time series, containing counts per category
         """
         categories = [
             "kept_in_both",
@@ -496,7 +493,6 @@ class SeriesComparisonRelative(SeriesComparison):
         ValueError
             if no comment series is available.
         """
-
         if self.c2n.empty:
             raise ValueError("No comment series!")
 

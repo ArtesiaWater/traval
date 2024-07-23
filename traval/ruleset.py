@@ -12,6 +12,8 @@ from . import rulelib
 
 
 class RuleSetEncoder(json.JSONEncoder):
+    """Encode values in RuleSet to JSON."""
+
     def default(self, o):
         if callable(o):
             return "func:" + o.__name__
@@ -39,7 +41,8 @@ def ruleset_hook(obj):
                 val = getattr(rulelib, funcname)
             except AttributeError:
                 warnings.warn(
-                    f"Could not load function {funcname} " "from `traval.rulelib`!"
+                    f"Could not load function {funcname} " "from `traval.rulelib`!",
+                    stacklevel=1,
                 )
                 val = funcname
             obj[key] = val
@@ -49,7 +52,9 @@ def ruleset_hook(obj):
             try:
                 val = getattr(np, funcname)
             except AttributeError:
-                warnings.warn(f"Could not load function {funcname} " "from `numpy`!")
+                warnings.warn(
+                    f"Could not load function {funcname} " "from `numpy`!", stacklevel=1
+                )
                 val = (funcname,)
             obj[key] = (val,)
         elif str(value).startswith("series:"):
@@ -83,7 +88,7 @@ class RuleSet:
 
     The RuleSet object stores detection rules and other relevant information
     in a dictionary. The order in which rules are carried out, the functions
-    that parse the timeseries, the extra arguments required by those functions
+    that parse the time series, the extra arguments required by those functions
     are all stored together.
 
     The detection functions must take a series as the first argument, and
@@ -103,7 +108,6 @@ class RuleSet:
 
     Examples
     --------
-
     Given two detection functions 'foo' and 'bar':
 
     >>> rset = RuleSet(name="foobar")
@@ -144,21 +148,20 @@ class RuleSet:
         Parameters
         ----------
         series : pandas.Series or pandas.DataFrame
-            timeseries to apply rules to
+            time series to apply rules to
 
         Returns
         -------
         d : OrderedDict
-            Dictionary containing resulting timeseries after applying rules.
+            Dictionary containing resulting time series after applying rules.
             Keys represent step numbers (0 is the original series, 1 the
             outcome of rule #1, etc.)
         c : OrderedDict
-            Dictionary containing corrections to timeseries based on rules
+            Dictionary containing corrections to time series based on rules
             Keys represent step numbers (1 contains the corrections based on
             rule #1, etc.). When no correction is available, step contains
             the value 0.
         """
-
         return self._applyself(series)
 
     def add_rule(self, name, func, apply_to=None, kwargs=None):
@@ -272,7 +275,7 @@ class RuleSet:
 
     @staticmethod
     def _parse_kwargs(kwargs, name=None):
-        """Internal method, parse keyword arguments dictionary.
+        """Internal method to parse keyword arguments dictionary.
 
         Iterates over keys, values in kwargs dictionary. If value is callable,
         calls value with 'name' as function argument. The result is stored
@@ -290,7 +293,7 @@ class RuleSet:
         dict
             dictionary of parsed arguments
         """
-        new_args = dict()
+        new_args = {}
         if kwargs is not None:
             for k, v in kwargs.items():
                 if callable(v):
@@ -300,21 +303,21 @@ class RuleSet:
         return new_args
 
     def _applyself(self, series):
-        """Internal method, apply ruleset to series.
+        """Internal method to apply ruleset to series.
 
         Parameters
         ----------
         series: pandas.Series or pandas.DataFrame
-            timeseries to apply rules to
+            time series to apply rules to
 
         Returns
         -------
         d: OrderedDict
-            Dictionary containing resulting timeseries after applying rules.
+            Dictionary containing resulting time series after applying rules.
             Keys represent step numbers (0 is the original series, 1 the
             outcome of rule  # 1, etc.)
         c: OrderedDict
-            Dictionary containing corrections to timeseries based on rules
+            Dictionary containing corrections to time series based on rules
             Keys represent step numbers(1 contains the corrections based on
             rule  # 1, etc.). When no correction is available, step contains
             the value 0.
@@ -329,8 +332,21 @@ class RuleSet:
                 arg_dict = self._parse_kwargs(irule["kwargs"], name)
                 corr = irule["func"](d[int(irule["apply_to"])], **arg_dict)
                 # store both correction and result
-                d[i] = d[int(irule["apply_to"])] + corr
-                c[i] = corr.loc[corr != 0.0].copy()
+                # support correction code based corrections
+                if isinstance(corr, pd.DataFrame) and "correction_code" in corr.columns:
+                    d[i] = d[int(irule["apply_to"])].where(
+                        corr["correction_code"] == 0, np.nan
+                    )
+                    c[i] = corr.loc[corr["correction_code"] != 0.0].copy()
+                elif isinstance(corr, pd.Series):
+                    # support nan-based corrections
+                    d[i] = d[int(irule["apply_to"])] + corr
+                    c[i] = corr.loc[corr != 0.0]
+                else:
+                    raise TypeError(
+                        "Corrections computed by rules must be pd.Series containing "
+                        "NaNs or DataFrame containing a column named 'correction_code'."
+                    )
             # if apply_to is tuple, collect series as kwargs to func
             elif isinstance(irule["apply_to"], tuple):
                 # collect results
@@ -383,7 +399,7 @@ class RuleSet:
         verbose : bool, optional
             prints message when operation complete, default is True
 
-        See also
+        See Also
         --------
         from_pickle : load RuleSet from pickle file
         to_json : store RuleSet as json file (does not support custom functions)
@@ -412,7 +428,7 @@ class RuleSet:
         RuleSet
             RuleSet object, including custom functions and parameters
 
-        See also
+        See Also
         --------
         to_pickle : store RuleSet as pickle (supports custom functions)
         to_json : store RuleSet as json file (does not support custom functions)
@@ -443,7 +459,7 @@ class RuleSet:
             prints message when operation complete, default is True
 
 
-        See also
+        See Also
         --------
         from_json : load RuleSet from json file
         to_pickle : store RuleSet as pickle (supports custom functions)
@@ -453,7 +469,7 @@ class RuleSet:
             "Custom functions will not be preserved when storing "
             "RuleSet as JSON file!"
         )
-        warnings.warn(msg)
+        warnings.warn(msg, stacklevel=1)
         rules = deepcopy(self.rules)
         rules["name"] = self.name
         if fname is not None:
@@ -486,7 +502,7 @@ class RuleSet:
         RuleSet:
             RuleSet object
 
-        See also
+        See Also
         --------
         to_json : store RuleSet as JSON file (does not support custom functions)
         to_pickle : store RuleSet as pickle (supports custom functions)
@@ -520,9 +536,9 @@ class RuleSet:
         new_ruleset = deepcopy(self.rules)
         for rule in new_ruleset.values():
             rule["kwargs"] = self._parse_kwargs(rule["kwargs"], name=name)
-        
+
         # create new object with resolved parameters
         rset = RuleSet(name)
         rset.rules = new_ruleset
-        
+
         return rset
