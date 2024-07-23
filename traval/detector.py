@@ -6,10 +6,10 @@ import pandas as pd
 
 from .ts_comparison import SeriesComparison, SeriesComparisonRelative
 from .ts_utils import (
-    unique_nans_in_series,
-    mask_corrections_no_comparison_value,
-    mask_corrections_modified_value,
     corrections_as_nan,
+    mask_corrections_modified_value,
+    mask_corrections_no_comparison_value,
+    unique_nans_in_series,
 )
 
 

@@ -400,7 +400,7 @@ def rule_offset_detection(
 
 
 def rule_outside_n_sigma(series, n=2.0):
-    """Detection rule, set values outside of n * standard deviation to NaN
+    """Detection rule, set values outside of n * standard deviation to NaN.
 
     Parameters
     ----------
@@ -738,7 +738,6 @@ def rule_shift_to_manual_obs(
     """
     # check if time between manual obs and sensor obs
     # are further apart than max_dt:
-    # nearest = hseries.index.map(lambda t: series.index[series.index.get_indexer([t], method="nearest")])
     nearest = series.index.get_indexer(hseries.index, method="nearest")
     mask = np.abs((series.index[nearest] - hseries.index).total_seconds()) <= (
         pd.Timedelta(max_dt) / pd.Timedelta("1S")

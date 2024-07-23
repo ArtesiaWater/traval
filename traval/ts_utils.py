@@ -5,6 +5,8 @@ import pandas as pd
 
 
 class CorrectionCode(IntEnum):
+    """Codes and labels for labeling error detection results."""
+
     NO_CORRECTION = 0
     BELOW_THRESHOLD = -2
     NOT_EQUAL_VALUE = -1
