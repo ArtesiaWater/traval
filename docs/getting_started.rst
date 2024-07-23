@@ -5,11 +5,8 @@ Getting Started
 Installation
 ------------
 
-To install traval, a working version of Python 3.7 or 3.8 has to be installed on 
-your computer. We recommend using the Anaconda Distribution with Python 3.7 as 
-it includes most of the python package dependencies and the Jupyter Notebook 
-software to run the notebooks. However, you are free to install any 
-Python distribution you want. 
+To install traval, a working version of Python 3.9 or higher has to be installed on 
+your computer.
 
 To install traval, use:
 
@@ -71,10 +68,10 @@ Take a look at the ruleset by just typing `ruleset`:
           1: rule1                  0
 
 
-Next define a Detector object. This object is designed to store a timeseries 
+Next define a Detector object. This object is designed to store a time series 
 and the intermediate and final results after applying an error detection 
-algorithm. Initialize the Detector object with some timeseries. In this example 
-we assume there is a timeseries called `raw_series`:
+algorithm. Initialize the Detector object with some time series. In this example 
+we assume there is a time series called `raw_series`:
 
 
 .. code:: python
@@ -82,7 +79,7 @@ we assume there is a timeseries called `raw_series`:
     detect = traval.Detector(raw_series)
 
 
-Apply our first algorithm to the timeseries.
+Apply our first algorithm to the time series.
 
 .. code:: python
 
