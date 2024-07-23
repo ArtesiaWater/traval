@@ -1,5 +1,7 @@
+# ruff: noqa: D100 D103
 import numpy as np
 import pandas as pd
+
 from traval import SeriesComparison, SeriesComparisonRelative
 
 
@@ -20,10 +22,9 @@ def test_series_comparison_plot():
 
     sc = SeriesComparison(s1, s2)
 
-    ax = sc.plots.plot_series_comparison(
+    sc.plots.plot_series_comparison(
         mark_different=True, mark_identical=True, mark_unique=True
     )
-    return ax
 
 
 def test_relative_series_comparison_plot():
@@ -43,8 +44,6 @@ def test_relative_series_comparison_plot():
 
     scr = SeriesComparisonRelative(s1, s2, b)
 
-    ax = scr.plots.plot_relative_comparison(
+    scr.plots.plot_relative_comparison(
         mark_unique=True, mark_different=True, mark_identical=True, mark_introduced=True
     )
-
-    return ax
