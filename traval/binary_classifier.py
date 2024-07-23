@@ -53,7 +53,7 @@ class BinaryClassifier:
         Parameters
         ----------
         comparison : traval.SeriesComparisonRelative
-            object comparing two timeseries with base timeseries
+            object comparing two time series with base time series
 
         Returns
         -------
@@ -89,7 +89,7 @@ class BinaryClassifier:
         BinaryClassifier
             BinaryClassifier object based on values in confusion matrix.
 
-        See also
+        See Also
         --------
         BinaryClassifier.confusion_matrix : for explanation (of abbreviations)
         """
@@ -154,7 +154,6 @@ class BinaryClassifier:
         data : pd.DataFrame or np.array
             confusion matrix
         """
-
         # create array with data
         data = np.zeros((2, 2), dtype=int)
         # true positives = errors correctly identified
@@ -192,7 +191,7 @@ class BinaryClassifier:
         phi : float
             the Matthews correlation coefficient
 
-        See also
+        See Also
         --------
         mcc : convenience method for calculating MCC
         """
@@ -218,7 +217,7 @@ class BinaryClassifier:
         phi : float
             the Matthews correlation coefficient
 
-        See also
+        See Also
         --------
         matthews_correlation_coefficient : more information about the statistic
         """
@@ -268,7 +267,7 @@ class BinaryClassifier:
     def true_positive_rate(self):
         """True Positive Rate. Synonym for sensitivity.
 
-        See sensitiviy for description.
+        See sensitivity for description.
         """
         return self.sensitivity
 
@@ -349,7 +348,7 @@ class BinaryClassifier:
 
     @property
     def prevalence(self):
-        """Prevalance of true errors in total population.
+        """Prevalence of true errors in total population.
 
             Prevalence = (TP + FN) / (TP + FP + FN + TN)
 
@@ -434,7 +433,6 @@ class BinaryClassifier:
         s : pandas.Series
             series containing all statistics
         """
-
         sdict = {}
         for k, v in self.stats_abbreviations.items():
             if use_abbreviations:
