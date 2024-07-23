@@ -82,8 +82,7 @@ select = [
     "B",   # flake8-bugbear
     "NPY", # numpy
 ]
-
-[tool.ruff.format]
+ignore = ["D100", "D102", "D103", "D401"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
