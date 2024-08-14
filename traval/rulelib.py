@@ -589,10 +589,11 @@ def rule_pastas_outside_pi(
 
             corrections = rule_outside_bandwidth(series, lower, upper)
             corrections.columns = [
-                "sim (r^2={0:.3f})".format(ml.stats.rsq()),
+                "correction_code",
                 "series_values",
                 "comparison_values",
             ]
+            corrections.index.name = ("sim (r^2={0:.3f})".format(ml.stats.rsq()),)
 
             if savedir:
                 savedir.mkdir(exist_ok=True)
