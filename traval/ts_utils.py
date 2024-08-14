@@ -181,22 +181,53 @@ def mask_corrections_no_comparison_value(series, mask):
 
 
 def corrections_as_nan(corrections):
-    """Convert corrections series to NaNs.
+    """Convert correction code series to NaNs.
+
+    Excludes codes 0 and 4, which are used to indicate no correction and a modification
+    of the value, respectively.
 
     Parameters
     ----------
-    corrections : pd.DataFrame
-        corrections dataframe with correction code, series values and comparison values
+    corrections : pd.Series or pd.DataFrame
+        series or dataframe with correction code
 
     Returns
     -------
     c : pd.Series
         return corrections series with nans where value is corrected
     """
+    if isinstance(corrections, pd.DataFrame):
+        corrections = corrections["correction_code"]
     c = pd.Series(index=corrections.index, data=0.0)
-    # set values where correction code is not NaN
-    # (meaning a correction was applied) to NaN
-    c[corrections["correction_code"] != 0] = np.nan
+    # set values where correction code is *not* 0 or 4 to NaN
+    # (meaning a correction was applied)
+    c.loc[(corrections != 0) | (corrections != 4)] = np.nan
+    return c
+
+
+def corrections_as_float(corrections):
+    """Convert correction code series to NaNs.
+
+    Excludes codes 0 and 4, which are used to indicate no correction and a modification
+    of the value, respectively.
+
+    Parameters
+    ----------
+    corrections : pd.DataFrame
+        dataframe with correction code and original + modified values
+
+    Returns
+    -------
+    c : pd.Series
+        return corrections series with floats where value is modified
+    """
+    c = pd.Series(index=corrections.index, data=0.0)
+    # set values where correction code is 4 to difference between original and modified
+    mask = corrections["correction_code"] == 4
+    c.loc[mask] = (
+        corrections.loc[mask, "comparison_values"]
+        - corrections.loc[mask, "series_values"]
+    )
     return c
 
 
