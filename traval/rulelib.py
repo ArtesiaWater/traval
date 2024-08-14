@@ -593,7 +593,7 @@ def rule_pastas_outside_pi(
                 "series_values",
                 "comparison_values",
             ]
-            corrections.index.name = ("sim (r^2={0:.3f})".format(ml.stats.rsq()),)
+            corrections.index.name = f"sim (r^2={ml.stats.rsq():.3f})"
 
             if savedir:
                 savedir.mkdir(exist_ok=True)
