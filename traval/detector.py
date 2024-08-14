@@ -6,6 +6,7 @@ import pandas as pd
 
 from .ts_comparison import SeriesComparison, SeriesComparisonRelative
 from .ts_utils import (
+    corrections_as_float,
     corrections_as_nan,
     mask_corrections_modified_value,
     mask_corrections_no_comparison_value,
@@ -391,7 +392,7 @@ class Detector:
         rulenames = [self.ruleset.get_step_name(i) for i in steps]
 
         # get corrections
-        corr = self.get_corrections_dataframe()
+        corr = self.get_corrections_dataframe(as_correction_codes=True)
 
         if corr.empty:
             corr = pd.DataFrame(index=self.series.index, columns=rulenames, data=0.0)
@@ -400,8 +401,8 @@ class Detector:
 
         comments = []
         for col in corr.columns:
-            s = corr[col].copy()
-            s = s.replace(0.0, "").replace(np.nan, col)
+            s = pd.Series(index=corr.index, data=col)
+            s.loc[corr[col] == 0] = ""
             comments.append(s)
 
         comments = pd.concat(comments, axis=1).apply(
@@ -468,9 +469,10 @@ class Detector:
                 else:
                     s = pd.Series(name="correction_code")
             elif isinstance(s, pd.DataFrame) and "correction_code" in s.columns:
-                s = s["correction_code"]
                 if as_addable_df:
-                    s = corrections_as_nan(s)
+                    s = corrections_as_nan(s) + corrections_as_float(s)
+                else:
+                    s = s["correction_code"]
             elif isinstance(s, pd.Series):
                 if as_correction_codes:
                     s = mask_corrections_no_comparison_value(s, s.isna()).add(
@@ -483,6 +485,8 @@ class Detector:
 
         # corrections, 0 means nothing is changed, nan means value is missing
         df = pd.concat(clist, axis=1)
+        if as_correction_codes:
+            df = df.infer_objects(copy=False).fillna(0).astype(int)
         df.columns = list(self.ruleset.rules.keys())
         return df
 
