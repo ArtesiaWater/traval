@@ -5,23 +5,29 @@ import numpy as np
 import pandas as pd
 
 from .ts_comparison import SeriesComparison, SeriesComparisonRelative
-from .ts_utils import unique_nans_in_series
+from .ts_utils import (
+    corrections_as_float,
+    corrections_as_nan,
+    mask_corrections_modified_value,
+    mask_corrections_no_comparison_value,
+    unique_nans_in_series,
+)
 
 
 class Detector:
-    """Detector object for applying error detection algorithms to timeseries.
+    """Detector object for applying error detection algorithms to time series.
 
-    The Detector is used to apply error detection algorithms to a timeseries
+    The Detector is used to apply error detection algorithms to a time series
     and optionally contains a 'truth' series, to which the error detection
     result can be compared. An example of a 'truth' series is a manually
-    validated timeseries. Custom error detection algorithms can be defined
+    validated time series. Custom error detection algorithms can be defined
     using the RuleSet object.
 
 
     Parameters
     ----------
     series : pd.Series or pd.DataFrame
-        timeseries to check
+        time series to check
     truth : pd.Series or pd.DataFrame, optional
         series that represents the 'truth', i.e. a benchmark to which
         the error detection result can be compared, by default None
@@ -29,15 +35,14 @@ class Detector:
 
     Examples
     --------
-
-    Given a timeseries 'series' and some ruleset 'rset':
+    Given a time series 'series' and some ruleset 'rset':
 
     >>> d = Detector(series)
     >>> d.apply_ruleset(rset)
     >>> d.plot_overview()
 
 
-    See also
+    See Also
     --------
     traval.RuleSet : object for defining detection algorithms
     """
@@ -48,7 +53,7 @@ class Detector:
         Parameters
         ----------
         series : pd.Series or pd.DataFrame
-            timeseries to check
+            time series to check
         truth : pd.Series or pd.DataFrame, optional
             series that represents the 'truth', i.e. a benchmark to which
             the error detection result can be compared, by default None
@@ -77,7 +82,7 @@ class Detector:
         Parameters
         ----------
         series : object
-            timeseries to check, must be pd.Series or pd.DataFrame. Datatype
+            time series to check, must be pd.Series or pd.DataFrame. Datatype
             of series or first column of DataFrame must be float.
 
         Raises
@@ -85,7 +90,6 @@ class Detector:
         TypeError
             if series or dtype of series does not comply
         """
-
         # check pd.Series or pd.DataFrame
         if isinstance(series, pd.Series):
             dtype = series.dtypes
@@ -123,7 +127,7 @@ class Detector:
             for convenience.
 
 
-        See also
+        See Also
         --------
         traval.RuleSet : object for defining detection algorithms
         """
@@ -238,8 +242,8 @@ class Detector:
     def uniqueness(self, truth=None):
         """Calculate unique contribution per rule to stats.
 
-        Note: the calculated statistics per rule contain an undercount,
-        i.e. when multiple rules mark the same observatin as suspect it is
+        Note: the calculated statistics per rule are under counted,
+        i.e. when multiple rules mark the same observation as suspect it is
         not contained in this result.
 
         Parameters
@@ -388,7 +392,7 @@ class Detector:
         rulenames = [self.ruleset.get_step_name(i) for i in steps]
 
         # get corrections
-        corr = self.get_corrections_dataframe()
+        corr = self.get_corrections_dataframe(as_correction_codes=True)
 
         if corr.empty:
             corr = pd.DataFrame(index=self.series.index, columns=rulenames, data=0.0)
@@ -397,8 +401,8 @@ class Detector:
 
         comments = []
         for col in corr.columns:
-            s = corr[col].copy()
-            s = s.replace(0.0, "").replace(np.nan, col)
+            s = pd.Series(index=corr.index, data=col)
+            s.loc[corr[col] == 0] = ""
             comments.append(s)
 
         comments = pd.concat(comments, axis=1).apply(
@@ -422,12 +426,12 @@ class Detector:
         return df
 
     def get_final_result(self):
-        """Get final timeseries with flagged values set to NaN.
+        """Get final time series with flagged values set to NaN.
 
         Returns
         -------
         series : pandas.Series
-            Timeseries produced by final step in RuleSet with flagged
+            time series produced by final step in RuleSet with flagged
             values set to NaN.
         """
         key = len(self.results.keys()) - 1
@@ -435,29 +439,54 @@ class Detector:
         s.name = self.name
         return s
 
-    def get_corrections_dataframe(self):
+    def get_corrections_dataframe(self, as_correction_codes=False, as_addable_df=False):
         """Get DataFrame containing corrections.
+
+        Parameters
+        ----------
+        as_correction_codes : bool, optional
+            return DataFrame with correction codes, by default False
+        as_addable_df : bool, optional
+            return DataFrame with corrections dataframe that you can add to the original
+            time series to obtain the final result. Corrections are NaN when errors are
+            detected, and nonzero where observations are shifted, and zero everywhere
+            else.
 
         Returns
         -------
         df : pandas.DataFrame
-            DataFrame containing corrections. NaN means value is flagged
-            as suspicious, 0.0 means no correction.
+            DataFrame containing corrections.
         """
+        if as_correction_codes and as_addable_df:
+            raise ValueError(
+                "Only one of 'as_correction_codes' and 'as_addable_df' can be True!"
+            )
         clist = []
         for s in self.corrections.values():
             if isinstance(s, np.ndarray):
-                s = pd.Series(dtype=float)
-            clist.append(s.fillna(-9999))
+                if as_addable_df:
+                    s = pd.Series()
+                else:
+                    s = pd.Series(name="correction_code")
+            elif isinstance(s, pd.DataFrame) and "correction_code" in s.columns:
+                if as_addable_df:
+                    s = corrections_as_nan(s) + corrections_as_float(s)
+                else:
+                    s = s["correction_code"]
+            elif isinstance(s, pd.Series):
+                if as_correction_codes:
+                    s = mask_corrections_no_comparison_value(s, s.isna()).add(
+                        mask_corrections_modified_value(s, s, (s.notnull() & s != 0.0)),
+                        fill_value=0,
+                    )
+                    s = s["correction_code"]
 
-        # corrections are nan, 0.0 means nothing is changed
-        df = (
-            pd.concat(clist, axis=1)
-            .isna()
-            .astype(float)
-            .replace(0.0, np.nan)
-            .replace(1.0, 0.0)
-        )
+            clist.append(s)
+
+        # corrections, 0 means nothing is changed, nan means value is missing
+        df = pd.concat(clist, axis=1)
+        if as_correction_codes:
+            df = df.infer_objects(copy=False).fillna(0).astype(int)
         df.columns = list(self.ruleset.rules.keys())
         return df
 
@@ -506,7 +535,7 @@ class Detector:
         return df
 
     def plot_overview(self, mark_suspects=True, **kwargs):
-        """Plot timeseries with flagged values per applied rule.
+        """Plot time series with flagged values per applied rule.
 
         Parameters
         ----------
@@ -518,8 +547,6 @@ class Detector:
         ax : list of matplotlib.pyplot.Axes
             axes objects
         """
-        resultsdf = self.get_results_dataframe()
-
         if "figsize" in kwargs:
             figsize = kwargs.pop("figsize")
         else:
@@ -534,16 +561,17 @@ class Detector:
             **kwargs,
         )
 
-        for iax, icol in zip(axes, resultsdf):
-            iax.plot(resultsdf.index, resultsdf[icol], label=icol)
+        for icol, iax in enumerate(axes):
+            iresult = self.results[icol]
+            iax.plot(iresult.index, iresult, label=self.ruleset.get_step_name(icol))
 
             if mark_suspects:
-                if icol != resultsdf.columns[0]:
-                    corr = self.corrections[resultsdf.columns.get_loc(icol)]
-                    if isinstance(corr, pd.Series):
+                if icol != 0:
+                    icorr = self.corrections[icol]
+                    if isinstance(icorr, pd.DataFrame):
                         iax.plot(
-                            corr.index,
-                            resultsdf.loc[corr.index].iloc[:, 0],
+                            icorr.index,
+                            self.results[0].loc[icorr.index],
                             marker="x",
                             c="C3",
                             ls="none",

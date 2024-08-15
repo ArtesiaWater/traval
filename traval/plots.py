@@ -6,7 +6,7 @@ from scipy.stats import norm
 
 
 class ComparisonPlots:
-    """Mix-in class for plots for comparing timeseries."""
+    """Mix-in class for plots for comparing time series."""
 
     color_dict = {
         "only_in_s1": {"color": "orange"},
@@ -60,16 +60,16 @@ class ComparisonPlots:
     def plot_series_comparison(
         self, mark_unique=True, mark_different=True, mark_identical=True, ax=None
     ):
-        """Plot comparison between two timeseries.
+        """Plot comparison between two time series.
 
         Parameters
         ----------
         mark_unique : bool, optional
             mark unique values with colored X's, by default True
         mark_different : bool, optional
-            highlight where timeseries differ with red, by default True
+            highlight where time series differ with red, by default True
         mark_identical : bool, optional
-            highlight where timeseries are identical with green,
+            highlight where time series are identical with green,
             by default True
         ax : axis, optional
             axis object to plot on, by default None
@@ -79,7 +79,6 @@ class ComparisonPlots:
         ax : axis
             axis object
         """
-
         if ax is None:
             fig, ax = plt.subplots(1, 1, figsize=(12, 5))
         else:
@@ -174,7 +173,7 @@ class ComparisonPlots:
         mark_introduced=False,
         ax=None,
     ):
-        """Plot comparison between two timeseries relative to base timeseries.
+        """Plot comparison between two time series relative to base time series.
 
         Parameters
         ----------
@@ -185,7 +184,7 @@ class ComparisonPlots:
         mark_identical : bool, optional
             highlight where series are identical with green, by default True
         mark_introduced : bool, optional
-            mark observations that are not in the base timeseries with X's,
+            mark observations that are not in the base time series with X's,
             by default False
         ax : axis, optional
             axis to plot on, by default None
@@ -195,7 +194,6 @@ class ComparisonPlots:
         ax : axis
             axis handle
         """
-
         ax = self.plot_series_comparison(
             mark_unique=mark_unique,
             mark_different=mark_different,
@@ -479,7 +477,6 @@ def det_plot(fpr, fnr, labels, ax=None, **kwargs):
     ax : matplotlib.pyplot.Axes
         axes handle
     """
-
     if not isinstance(fpr, list):
         fpr = [fpr]
     if not isinstance(fnr, list):
