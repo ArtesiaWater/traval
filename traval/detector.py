@@ -102,7 +102,7 @@ class Detector:
         # check dtype (of first col)
         if dtype not in [float, np.float32]:
             raise TypeError(
-                "Series (or first column of DataFrame) must " "have dtype float!"
+                "Series (or first column of DataFrame) must have dtype float!"
             )
         return name
 
