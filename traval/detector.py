@@ -405,8 +405,10 @@ class Detector:
             s = s.loc[corr[col] != 0]
             comments.append(s)
 
-        comments = pd.concat(comments, axis=1).apply(
-            lambda s: ",".join(s[s != ""]), axis=1
+        comments = (
+            pd.concat(comments, axis=1)
+            .fillna("")
+            .apply(lambda s: ",".join(s[s != ""]), axis=1)
         )
         comments = comments.replace(np.nan, "")
         comments.name = "comment"
