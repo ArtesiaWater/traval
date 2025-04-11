@@ -402,7 +402,7 @@ class Detector:
         comments = []
         for col in corr.columns:
             s = pd.Series(index=corr.index, data=col)
-            s.loc[corr[col] == 0] = ""
+            s = s.loc[corr[col] != 0]
             comments.append(s)
 
         comments = pd.concat(comments, axis=1).apply(
