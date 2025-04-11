@@ -140,7 +140,7 @@ class TravalParameters:
                 )
             return df
         else:
-            return ValueError("Parameter DataFrame type not understood: " f"{type(df)}")
+            return ValueError(f"Parameter DataFrame type not understood: {type(df)}")
 
     @classmethod
     def from_csv(cls, csvfile):
@@ -297,7 +297,7 @@ class TravalParameters:
         elif self.parameters is not None:
             mask = self.parameters.index.get_level_values(0) == location
             if mask.sum() == 0:
-                raise KeyError(f"Location '{location}' not in parameters" " DataFrame!")
+                raise KeyError(f"Location '{location}' not in parameters DataFrame!")
             p = self.parameters.loc[idx[mask, :, :], :]
         else:
             raise ValueError("No location specific parameters!")

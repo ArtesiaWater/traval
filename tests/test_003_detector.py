@@ -95,3 +95,19 @@ def test_get_corrections():
 def test_get_final_result():
     d = get_detector_with_result()
     _ = d.get_final_result()
+
+
+def test_get_comment_series():
+    d = get_detector_with_result()
+    comments = d.get_comment_series()
+    assert (comments == "gt10").sum() == 4
+    assert (comments == "less_than_value").sum() == 2
+
+
+def test_empty_comment_series():
+    rset = traval.RuleSet(name="test_empty")
+    rset.add_rule("no_op", lambda x: pd.Series(), apply_to=0)
+    d = get_detector()
+    d.apply_ruleset(rset)
+    comments = d.get_comment_series()
+    assert comments.empty

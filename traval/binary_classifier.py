@@ -98,7 +98,7 @@ class BinaryClassifier:
         elif isinstance(cmat, np.ndarray):
             [tp, fn], [fp, tn] = cmat
         else:
-            raise TypeError("Cannot parse confusion matrix of type: " f"{type(cmat)}")
+            raise TypeError(f"Cannot parse confusion matrix of type: {type(cmat)}")
         return cls(tp, fp, tn, fn)
 
     def __add__(self, other):
