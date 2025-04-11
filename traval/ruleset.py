@@ -41,7 +41,7 @@ def ruleset_hook(obj):
                 val = getattr(rulelib, funcname)
             except AttributeError:
                 warnings.warn(
-                    f"Could not load function {funcname} " "from `traval.rulelib`!",
+                    f"Could not load function {funcname} from `traval.rulelib`!",
                     stacklevel=1,
                 )
                 val = funcname
@@ -53,7 +53,7 @@ def ruleset_hook(obj):
                 val = getattr(np, funcname)
             except AttributeError:
                 warnings.warn(
-                    f"Could not load function {funcname} " "from `numpy`!", stacklevel=1
+                    f"Could not load function {funcname} from `numpy`!", stacklevel=1
                 )
                 val = (funcname,)
             obj[key] = (val,)
@@ -466,8 +466,7 @@ class RuleSet:
         from_pickle : load RuleSet from pickle file
         """
         msg = (
-            "Custom functions will not be preserved when storing "
-            "RuleSet as JSON file!"
+            "Custom functions will not be preserved when storing RuleSet as JSON file!"
         )
         warnings.warn(msg, stacklevel=1)
         rules = deepcopy(self.rules)

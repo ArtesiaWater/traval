@@ -102,7 +102,7 @@ class Detector:
         # check dtype (of first col)
         if dtype not in [float, np.float32]:
             raise TypeError(
-                "Series (or first column of DataFrame) must " "have dtype float!"
+                "Series (or first column of DataFrame) must have dtype float!"
             )
         return name
 
@@ -402,11 +402,13 @@ class Detector:
         comments = []
         for col in corr.columns:
             s = pd.Series(index=corr.index, data=col)
-            s.loc[corr[col] == 0] = ""
+            s = s.loc[corr[col] != 0]
             comments.append(s)
 
-        comments = pd.concat(comments, axis=1).apply(
-            lambda s: ",".join(s[s != ""]), axis=1
+        comments = (
+            pd.concat(comments, axis=1)
+            .fillna("")
+            .apply(lambda s: ",".join(s[s != ""]), axis=1)
         )
         comments = comments.replace(np.nan, "")
         comments.name = "comment"

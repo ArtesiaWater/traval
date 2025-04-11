@@ -8,14 +8,14 @@ from traval.ruleset import RuleSet
 
 def func1(s):
     mask = s > 10
-    s = pd.DataFrame(index=s.index, data=0.0, columns=["correction_code"])
+    s = pd.Series(index=s.index, data=0.0)
     s.loc[mask] = np.nan
     return s
 
 
 def func2(s, val):
     mask = s < val
-    s = pd.DataFrame(index=s.index, data=0.0, columns=["correction_code"])
+    s = pd.Series(index=s.index, data=0.0)
     s.loc[mask] = np.nan
     return s
 
