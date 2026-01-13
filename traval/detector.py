@@ -126,7 +126,6 @@ class Detector:
             numbers as comparisons. Note: value of -1 refers to last step
             for convenience.
 
-
         See Also
         --------
         traval.RuleSet : object for defining detection algorithms
@@ -403,14 +402,19 @@ class Detector:
         for col in corr.columns:
             s = pd.Series(index=corr.index, data=col)
             s = s.loc[corr[col] != 0]
-            comments.append(s)
+            if not s.empty:
+                comments.append(s)
 
-        comments = (
-            pd.concat(comments, axis=1)
-            .fillna("")
-            .apply(lambda s: ",".join(s[s != ""]), axis=1)
-        )
-        comments = comments.replace(np.nan, "")
+        if len(comments) > 0:
+            comments = (
+                pd.concat(comments, axis=1)
+                .fillna("")
+                .apply(lambda s: ",".join(s[s != ""]), axis=1)
+            )
+            comments = comments.replace(np.nan, "")
+        else:
+            comments = pd.Series()
+
         comments.name = "comment"
 
         return comments
