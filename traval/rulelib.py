@@ -95,7 +95,7 @@ def rule_max_gradient(series, max_step=0.5, max_timestep="1D"):
         mask = grad > max_step
         return mask_corrections_above_threshold(series, max_step, mask)
     else:
-        mask = grad < -max_step
+        mask = grad < max_step
         return mask_corrections_below_threshold(series, max_step, mask)
 
 
