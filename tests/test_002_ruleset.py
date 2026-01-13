@@ -1,4 +1,7 @@
 # ruff: noqa: D100 D103
+import os
+import pytest
+
 import numpy as np
 import pandas as pd
 
@@ -99,15 +102,20 @@ def test_to_from_pickle():
     rset = get_filled_ruleset()
     rset.to_pickle("test.pkl")
     rset = RuleSet.from_pickle("test.pkl")
-    import os
 
     os.remove("test.pkl")
 
 
 def test_to_from_json():
     rset = get_filled_ruleset()
-    rset.to_json("test.json")
-    rset = RuleSet.from_json("test.json")
-    import os
+    # Assert warning about custom functions when writing JSON
+    with pytest.warns(UserWarning, match="Custom functions will not be preserved"):
+        rset.to_json("test.json")
+
+    # Assert warnings for missing functions in traval.rulelib when reading JSON
+    with pytest.warns(
+        UserWarning, match=r"Could not load function .* from `traval.rulelib`!"
+    ):
+        rset = RuleSet.from_json("test.json")
 
     os.remove("test.json")
