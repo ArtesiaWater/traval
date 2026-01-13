@@ -10,9 +10,7 @@ description = "Python package for applying automatic error detection algorithms 
 license = { file = "LICENSE" }
 readme = "readme.md"
 authors = [{ name = "D.A. Brakenhoff" }]
-maintainers = [
-    { name = "D.A. Brakenhoff", email = "d.brakenhoff@artesia-water.nl" },
-]
+maintainers = [{ name = "D.A. Brakenhoff", email = "d.brakenhoff@artesia-water.nl" }]
 requires-python = ">= 3.9"
 dependencies = ["numpy", "scipy", "pandas", "matplotlib"]
 
@@ -28,10 +26,9 @@ classifiers = [
     "Operating System :: MacOS",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Scientific/Engineering :: Hydrology",
 ]
@@ -43,7 +40,7 @@ documentation = "https://traval.readthedocs.io/en/latest/"
 
 [project.optional-dependencies]
 ci = [
-    "pastas",
+    # "pastas",
     "flake8",
     "pytest",
     "codecov",
