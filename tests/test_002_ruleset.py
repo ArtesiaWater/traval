@@ -1,9 +1,9 @@
 # ruff: noqa: D100 D103
 import os
-import pytest
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import traval
 from traval.ruleset import RuleSet

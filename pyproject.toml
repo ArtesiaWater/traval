@@ -47,6 +47,7 @@ ci = [
     "pytest-cov",
     "pytest-dependency",
     "codacy-coverage",
+    "ruff",
 ]
 docs = [
     "traval[ci]",
@@ -56,6 +57,7 @@ docs = [
     "nbsphinx",
     "nbsphinx_link",
 ]
+dev = ["traval[docs]"]
 
 [tool.setuptools]
 packages = ["traval"]
