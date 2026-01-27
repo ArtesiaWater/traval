@@ -12,7 +12,7 @@ readme = "readme.md"
 authors = [{ name = "D.A. Brakenhoff" }]
 maintainers = [{ name = "D.A. Brakenhoff", email = "d.brakenhoff@artesia-water.nl" }]
 requires-python = ">= 3.9"
-dependencies = ["numpy", "scipy", "pandas", "matplotlib"]
+dependencies = ["numpy", "scipy", "pandas<3.0", "matplotlib"]
 
 keywords = ["hydrology", "groundwater", "time series", "analysis", "database"]
 classifiers = [
